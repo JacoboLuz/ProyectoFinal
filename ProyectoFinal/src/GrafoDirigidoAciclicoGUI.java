@@ -549,6 +549,8 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         for (int[] arista : aristas) {
             Point origen = vertices.get(arista[0]);
             Point destino = vertices.get(arista[1]);
+            System.out.println(arista[0]);
+            System.out.println(arista[1]);
             dibujarFlecha(g2d, origen, destino);
         }
 
@@ -686,44 +688,44 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     que se tienen
      */
     public void valoresNumericosAleatorios() {
-            Random random = new Random();
+        Random random = new Random();
 
-            int width = panelDibujo.getWidth();
-            int height = panelDibujo.getHeight();
+        int width = panelDibujo.getWidth();
+        int height = panelDibujo.getHeight();
 
-            if (width <= 0 || height <= 0) {
-                width = 500;
-                height = 500;
+        if (width <= 0 || height <= 0) {
+            width = 500;
+            height = 500;
+        }
+        int centroX = width / 2;
+        int centroY = height / 2;
+
+        int distancia = 200;
+
+        for (int i = 0; i < maxVertices; i++) {
+            double angulo = (i * 2 * Math.PI) / maxVertices;
+            int x = (int) (centroX + distancia * Math.cos(angulo));
+            int y = (int) (centroY + distancia * Math.sin(angulo));
+
+            String nombreVertice = String.valueOf(random.nextInt(100));
+            nombresVertices.add(nombreVertice);
+            listaAdyacencia.add(new ArrayList<>());
+
+            vertices.add(new Point(x, y));
+
+            numVertices++;
+
+            tablaListaAdyacencia.setValueAt(nombreVertice, i, 0);
+
+            for (int j = 0; j < maxVertices; j++) {
+                matrizAdyacencia[i][j] = 0;
+                matrizAdyacencia[j][i] = 0;
             }
-            int centroX = width / 2;
-            int centroY = height / 2;
 
-            int distancia = 200;
-
-            for (int i = 0; i < maxVertices; i++) {
-                double angulo = (i * 2 * Math.PI) / maxVertices;
-                int x = (int) (centroX + distancia * Math.cos(angulo));
-                int y = (int) (centroY + distancia * Math.sin(angulo));
-
-                String nombreVertice = String.valueOf(random.nextInt(100));
-                nombresVertices.add(nombreVertice);
-                listaAdyacencia.add(new ArrayList<>());
-
-                vertices.add(new Point(x, y));
-
-                numVertices++;
-
-                tablaListaAdyacencia.setValueAt(nombreVertice, i, 0);
-
-                for (int j = 0; j < maxVertices; j++) {
-                    matrizAdyacencia[i][j] = 0;
-                    matrizAdyacencia[j][i] = 0;
-                }
-
-                tablaMatrizAdyacencia.setValueAt(nombreVertice, i + 1, 0);
-                tablaMatrizAdyacencia.setValueAt(nombreVertice, 0, i + 1);
-            }
-            repaint();
+            tablaMatrizAdyacencia.setValueAt(nombreVertice, i + 1, 0);
+            tablaMatrizAdyacencia.setValueAt(nombreVertice, 0, i + 1);
+        }
+        repaint();
     }
 
     public void valoresLetrasAleatorios() {
@@ -769,7 +771,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
                 i++;
             }
-            }
+        }
         repaint();
     }
 
@@ -857,43 +859,43 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
 
     public String topologicalSort(){
-            int[] gradoEntrada = new int[maxVertices];
+        int[] gradoEntrada = new int[maxVertices];
+
+        for (int i = 0; i < maxVertices; i++) {
+            gradoEntrada[i] = gradoDeEntrada(i);
+        }
+
+        PriorityQueue<Integer> colaPrioridad = new PriorityQueue<>(Comparator.reverseOrder());
+
+        for (int i = 0; i < maxVertices; i++) {
+            if (gradoEntrada[i] == 0) {
+                colaPrioridad.add(i);
+            }
+        }
+
+        String ordenTopologico = "";
+
+        int cont = 0;
+        while (!colaPrioridad.isEmpty()) {
+            int vertice = colaPrioridad.poll();
+
+            if (cont > 0) {
+                ordenTopologico += "-";
+            }
+            ordenTopologico += nombresVertices.get(vertice);
 
             for (int i = 0; i < maxVertices; i++) {
-                gradoEntrada[i] = gradoDeEntrada(i);
-            }
-
-            PriorityQueue<Integer> colaPrioridad = new PriorityQueue<>(Comparator.reverseOrder());
-
-            for (int i = 0; i < maxVertices; i++) {
-                if (gradoEntrada[i] == 0) {
-                    colaPrioridad.add(i);
-                }
-            }
-
-            String ordenTopologico = "";
-
-            int cont = 0;
-            while (!colaPrioridad.isEmpty()) {
-                int vertice = colaPrioridad.poll();
-
-                if (cont > 0) {
-                    ordenTopologico += "-";
-                }
-                ordenTopologico += nombresVertices.get(vertice);
-
-                for (int i = 0; i < maxVertices; i++) {
-                    if (adyacente(vertice, i)) {
-                        gradoEntrada[i]--;
-                        if (gradoEntrada[i] == 0) {
-                            colaPrioridad.add(i);
-                        }
+                if (adyacente(vertice, i)) {
+                    gradoEntrada[i]--;
+                    if (gradoEntrada[i] == 0) {
+                        colaPrioridad.add(i);
                     }
                 }
-
-                cont++;
             }
-            return ordenTopologico;
+
+            cont++;
+        }
+        return ordenTopologico;
     }
 
     public String mostrarEstructura(){
@@ -985,24 +987,24 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     }
 
     public void cargarGrafo(){
-            List<String> grafos = listarGrafos();
-            if (grafos.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "No hay grafos guardados para mostrar.", "EROR", JOptionPane.ERROR_MESSAGE);
-            } else {
-                String seleccion = (String) JOptionPane.showInputDialog(
-                        null,
-                        "Seleccione un grafo para cargar:",
-                        "Cargar Grafo",
-                        JOptionPane.PLAIN_MESSAGE,
-                        null,
-                        grafos.toArray(),
-                        grafos.get(0)
-                );
+        List<String> grafos = listarGrafos();
+        if (grafos.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No hay grafos guardados para mostrar.", "EROR", JOptionPane.ERROR_MESSAGE);
+        } else {
+            String seleccion = (String) JOptionPane.showInputDialog(
+                    null,
+                    "Seleccione un grafo para cargar:",
+                    "Cargar Grafo",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    grafos.toArray(),
+                    grafos.get(0)
+            );
 
-                if (seleccion != null) {
-                    int indice = Integer.parseInt(seleccion.split(" ")[1]) - 1;
-                    leerArchivo(indice);
-                }
+            if (seleccion != null) {
+                int indice = Integer.parseInt(seleccion.split(" ")[1]) - 1;
+                leerArchivo(indice);
+            }
         }
 
     }
@@ -1151,7 +1153,4 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         repaint();
     }
 
-
-
 }
-

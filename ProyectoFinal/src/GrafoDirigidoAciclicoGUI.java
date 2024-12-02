@@ -2,6 +2,7 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class GrafoDirigidoAciclicoGUI extends JFrame {
     private JPanel panelControl, panelDibujo, panelRepresentaciones;
@@ -138,6 +139,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     private void crearArista() {
         String origen = JOptionPane.showInputDialog(this, "Ingrese el vértice origen:");
         String destino = JOptionPane.showInputDialog(this, "Ingrese el vértice destino:");
+
         if (origen == null || destino == null || !nombresVertices.contains(origen) || !nombresVertices.contains(destino)) {
             JOptionPane.showMessageDialog(this, "Vértices inválidos.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
@@ -148,8 +150,43 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
         matrizAdyacencia[indexOrigen][indexDestino] = 1;
         aristas.add(new int[]{indexOrigen, indexDestino});
+
+        ArrayList<Integer> adyacentes = listaAdyacencia.get(indexOrigen);
+        if (!adyacentes.contains(indexDestino)) {
+            adyacentes.add(indexDestino);
+        }
+
+        tablaMatrizAdyacencia.setValueAt("1", indexOrigen, indexDestino);
+
+        StringBuilder listaAdyacente = new StringBuilder();
+        listaAdyacente.append(origen);
+
+        ArrayList<Integer> lista = listaAdyacencia.get(indexOrigen);
+        for (int i = 0; i < lista.size(); i++) {
+
+            int verticeDestino = lista.get(i);
+
+            listaAdyacente.append(" -> ");
+            listaAdyacente.append(nombresVertices.get(verticeDestino));
+        }
+        listaAdyacente.append("/0");
+
+        tablaListaAdyacencia.setValueAt(listaAdyacente.toString(), indexOrigen, 0);
+
         repaint();
     }
+
+
+
+
+
+
+
+
+
+
+
+
 
     private void eliminarAristas() {
         aristas.clear();

@@ -17,10 +17,12 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     private JTextArea areaOrdenTopologico;
     private JTable tablaMatrizAdyacencia, tablaListaAdyacencia;
     private int maxVertices;
+    private int nuevoMaxVertices;
     private int numVertices = 0;
     private int[][] matrizAdyacencia;
     private ArrayList<ArrayList<Integer>> listaAdyacencia;
     private ArrayList<String> nombresVertices;
+    private ArrayList<String> nuevosNombresVertices;
     private ArrayList<Point> vertices;
     private ArrayList<int[]> aristas;
     private final int TAMANIO_VERTICE = 40;
@@ -30,9 +32,9 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         this.maxVertices = maxVertices;
         this.matrizAdyacencia = matrizAdyacencia;
         this.listaAdyacencia = new ArrayList<>();
-        this.nombresVertices = new ArrayList<>();
+        this.nombresVertices = nombresVertices;
         this.vertices = new ArrayList<>();
-        this.aristas = new ArrayList<>();
+        this.aristas = aristas;
 
         for (int i = 0; i < maxVertices; i++) {
             listaAdyacencia.add(new ArrayList<>());
@@ -106,7 +108,9 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
                 tablaMatrizAdyacencia.setValueAt(0, i, j);
             }
         }
-
+        crearVerticesCargados(maxVertices,nombresVertices);
+        System.out.println(maxVertices);
+        System.out.println(nombresVertices);
     }
 
 
@@ -1057,8 +1061,12 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
                     }
                 }
             }
-
+            this.nuevoMaxVertices=nuevoMaxVertices;
+            this.nuevosNombresVertices=nuevosNombresVertices;
             Auxiliar nuevaVentana = new Auxiliar(nuevoMaxVertices, nuevaMatrizAdyacencia, nuevosNombresVertices, nuevasAristas);
+            System.out.println("Nuevo Max Vértices: " + nuevoMaxVertices);
+            System.out.println("Nombres de Vértices: " + nuevosNombresVertices);
+
             dispose();
         } catch (IOException e) {
             e.printStackTrace();
@@ -1095,4 +1103,55 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
         return grafos;
     }
+    private void crearVerticesCargados(int nuevoMaxVertices,ArrayList<String> nuevosNombresVertices) {
+
+        if (nuevoMaxVertices == 0 || nuevosNombresVertices.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No hay datos cargados para los vértices.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int width = panelDibujo.getWidth();
+        int height = panelDibujo.getHeight();
+
+        if (width <= 0 || height <= 0) {
+            width = 500;
+            height = 500;
+        }
+        int centroX = width / 2;
+        int centroY = height / 2;
+
+        int distancia = 200;
+
+        for (int i = 0; i < maxVertices; i++) {
+            double angulo = (i * 2 * Math.PI) / maxVertices;
+            int x = (int) (centroX + distancia * Math.cos(angulo));
+            int y = (int) (centroY + distancia * Math.sin(angulo));
+
+            String nombreVertice = nuevosNombresVertices.get(i);
+            System.out.println(nombreVertice);
+            nombresVertices.add(nombreVertice);
+            listaAdyacencia.add(new ArrayList<>());
+
+
+            vertices.add(new Point(x, y));
+
+            numVertices++;
+
+            tablaListaAdyacencia.setValueAt(nombreVertice, i, 0);
+
+            for (int j = 0; j < nuevoMaxVertices; j++) {
+                matrizAdyacencia[i][j] = 0;
+                matrizAdyacencia[j][i] = 0;
+            }
+
+            tablaMatrizAdyacencia.setValueAt(nombreVertice, i + 1, 0);
+            tablaMatrizAdyacencia.setValueAt(nombreVertice, 0, i + 1);
+        }
+
+        repaint();
+    }
+
+
+
+}
 

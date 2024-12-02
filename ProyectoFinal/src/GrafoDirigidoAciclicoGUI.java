@@ -2,8 +2,9 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Random;
+import java.util.*;
 
 public class GrafoDirigidoAciclicoGUI extends JFrame {
     private JPanel panelControl, panelDibujo, panelRepresentaciones;
@@ -90,6 +91,8 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         btnCrearVertice.addActionListener(e -> crearVertice());
         btnCrearArista.addActionListener(e -> crearArista());
         btnEliminarAristas.addActionListener(e -> eliminarAristas());
+        btnOrdenTopologico.setEnabled(false);
+        btnOrdenTopologico.addActionListener(e->ordenTopologico());
         for (int i = 0; i <=maxVertices; i++) {
             for(int j=0;j<=maxVertices;j++){
                 tablaMatrizAdyacencia.setValueAt(0, i, j);
@@ -158,6 +161,8 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         panelRepresentaciones.add(new JScrollPane(tablaMatrizAdyacencia));
         panelRepresentaciones.add(new JScrollPane(tablaListaAdyacencia));
         panelRepresentaciones.add(new JScrollPane(areaOrdenTopologico));
+        btnOrdenTopologico.setEnabled(false);
+        btnOrdenTopologico.addActionListener(e->ordenTopologico());
 
         JPanel representacionesContainer = new JPanel(new BorderLayout());
         representacionesContainer.setBorder(BorderFactory.createTitledBorder(
@@ -175,6 +180,91 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
         crearVerticesAleatorios();
     }
+
+
+    public GrafoDirigidoAciclicoGUI(int maxVertices,int opc) {
+        this.maxVertices = maxVertices;
+        this.matrizAdyacencia = new int[maxVertices+1][maxVertices+1];
+        this.listaAdyacencia = new ArrayList<>();
+        this.nombresVertices = new ArrayList<>();
+        this.vertices = new ArrayList<>();
+        this.aristas = new ArrayList<>();
+
+        setTitle("Grafo Dirigido Acíclico");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setLayout(new BorderLayout());
+
+        panelControl = new JPanel(new FlowLayout());
+        btnCrearVertice = new JButton("Crear Vértice");
+        btnCrearArista = new JButton("Crear Arista");
+        btnCargarGrafo = new JButton("Cargar Grafo");
+        btnGuardarGrafo = new JButton("Guardar Grafo");
+        btnOrdenTopologico = new JButton("Orden Topológico");
+        btnEliminarAristas = new JButton("Eliminar Todas las Aristas");
+
+        panelControl.add(btnCrearVertice);
+        panelControl.add(btnCrearArista);
+        panelControl.add(btnCargarGrafo);
+        panelControl.add(btnGuardarGrafo);
+        panelControl.add(btnOrdenTopologico);
+        panelControl.add(btnEliminarAristas);
+
+        JPanel controlContainer = new JPanel(new BorderLayout());
+        controlContainer.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.BLACK), "Control de Grafo", TitledBorder.CENTER, TitledBorder.TOP));
+        controlContainer.add(panelControl);
+        add(controlContainer, BorderLayout.NORTH);
+
+        panelDibujo = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                dibujarGrafo(g);
+            }
+        };
+        panelDibujo.setBackground(Color.WHITE);
+
+        JPanel dibujoContainer = new JPanel(new BorderLayout());
+        dibujoContainer.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.BLACK), "Visualización del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
+        dibujoContainer.add(panelDibujo);
+        add(dibujoContainer, BorderLayout.CENTER);
+
+        panelRepresentaciones = new JPanel(new GridLayout(1, 3));
+        tablaMatrizAdyacencia = new JTable(maxVertices+1, maxVertices+1);
+        tablaListaAdyacencia = new JTable(maxVertices, 1);
+        areaOrdenTopologico = new JTextArea();
+        areaOrdenTopologico.setEditable(false);
+        panelRepresentaciones.add(new JScrollPane(tablaMatrizAdyacencia));
+        panelRepresentaciones.add(new JScrollPane(tablaListaAdyacencia));
+        panelRepresentaciones.add(new JScrollPane(areaOrdenTopologico));
+
+        JPanel representacionesContainer = new JPanel(new BorderLayout());
+        representacionesContainer.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.BLACK), "Representaciones del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
+        representacionesContainer.add(panelRepresentaciones);
+        add(representacionesContainer, BorderLayout.SOUTH);
+
+        btnCrearVertice.addActionListener(e -> crearVertice());
+        btnCrearArista.addActionListener(e -> crearArista());
+        btnEliminarAristas.addActionListener(e -> eliminarAristas());
+        btnOrdenTopologico.setEnabled(false);
+        btnOrdenTopologico.addActionListener(e->ordenTopologico());
+
+
+        for (int i = 0; i <= maxVertices; i++) {
+            for(int j=0;j<=maxVertices;j++){
+                tablaMatrizAdyacencia.setValueAt(0, i, j);
+            }
+        }
+        if(opc==0){
+            valoresNumericosAleatorios();
+        }else if(opc==1){
+            valoresLetrasAleatorios();
+        }
+    }
+
 
 
 
@@ -213,6 +303,12 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         numVertices++;
         repaint();
     }
+
+    private void ordenTopologico(){
+        areaOrdenTopologico.setText("Orden topológico: \n"+topologicalSort());
+        System.out.println(mostrarEstructura());
+    }
+
 
     //Es el encargado de pintar el vertice en la parte gráfica de la GUI.
     private void agregarVerticeGrafico() {
@@ -262,6 +358,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         ArrayList<Integer> adyacentes = listaAdyacencia.get(indexOrigen);
         if (!adyacentes.contains(indexDestino)) {
             adyacentes.add(indexDestino);
+            btnOrdenTopologico.setEnabled(true);
         }
 
         tablaMatrizAdyacencia.setValueAt("1", indexOrigen+1, indexDestino+1);
@@ -342,6 +439,8 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             }
         }
 
+        btnOrdenTopologico.setEnabled(false);
+        areaOrdenTopologico.setText("");
         repaint();
     }
 
@@ -456,21 +555,264 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             } else {
                 String valorStr = JOptionPane.showInputDialog("Introduce un valor:");
                 try {
+                    int opc = JOptionPane.showOptionDialog(null, "Seleccione una opción:",
+                            "Tipo de grafos", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                            null, new Object[]{"Numericos", "Letras", "Personalizado"}, "Numericos");
                     int valor = Integer.parseInt(valorStr);
-                    if (valor > 0) {
+                    if (opc == 0) {
+                        grafoGUI = new GrafoDirigidoAciclicoGUI(valor, opc);
+                    }else if(opc==1){
+                        if(valor>26){
+                            valor=4;
+                            JOptionPane.showMessageDialog(null, "Valor no válido. Se usarán valores aleatorios.");
+                            grafoGUI = new GrafoDirigidoAciclicoGUI();
+                        }else{
+                            grafoGUI = new GrafoDirigidoAciclicoGUI(valor, opc);
+                        }
+                    }else{
                         grafoGUI = new GrafoDirigidoAciclicoGUI(valor);
-                    } else {
-                        JOptionPane.showMessageDialog(null, "El valor debe ser mayor que 0. Se usarán valores aleatorios.");
-                        grafoGUI = new GrafoDirigidoAciclicoGUI();
                     }
                 } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog(null, "Valor no válido. Se usarán valores aleatorios.");
                     grafoGUI = new GrafoDirigidoAciclicoGUI();
                 }
             }
-
             grafoGUI.setSize(800, 600);
             grafoGUI.setVisible(true);
         });
+
+
+    }
+
+    /*
+    Permiten crear los valores aleatorios en base a la cantidad de vertices
+    que se tienen
+     */
+    public void valoresNumericosAleatorios() {
+            Random random = new Random();
+
+            int width = panelDibujo.getWidth();
+            int height = panelDibujo.getHeight();
+
+            if (width <= 0 || height <= 0) {
+                width = 500;
+                height = 500;
+            }
+            int centroX = width / 2;
+            int centroY = height / 2;
+
+            int distancia = 200;
+
+            for (int i = 0; i < maxVertices; i++) {
+                double angulo = (i * 2 * Math.PI) / maxVertices;
+                int x = (int) (centroX + distancia * Math.cos(angulo));
+                int y = (int) (centroY + distancia * Math.sin(angulo));
+
+                String nombreVertice = String.valueOf(random.nextInt(100));
+                nombresVertices.add(nombreVertice);
+                listaAdyacencia.add(new ArrayList<>());
+
+                vertices.add(new Point(x, y));
+
+                numVertices++;
+
+                tablaListaAdyacencia.setValueAt(nombreVertice, i, 0);
+
+                for (int j = 0; j < maxVertices; j++) {
+                    matrizAdyacencia[i][j] = 0;
+                    matrizAdyacencia[j][i] = 0;
+                }
+
+                tablaMatrizAdyacencia.setValueAt(nombreVertice, i + 1, 0);
+                tablaMatrizAdyacencia.setValueAt(nombreVertice, 0, i + 1);
+            }
+            repaint();
+    }
+
+    public void valoresLetrasAleatorios() {
+        String[] abecedario = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
+                "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U",
+                "V", "W", "X", "Y", "Z"};
+        Random random = new Random();
+
+        int width = panelDibujo.getWidth();
+        int height = panelDibujo.getHeight();
+
+        if (width <= 0 || height <= 0) {
+            width = 500;
+            height = 500;
+        }
+        int centroX = width / 2;
+        int centroY = height / 2;
+
+        int distancia = 200;
+
+        for (int i = 0; i < maxVertices;) {
+            double angulo = (i * 2 * Math.PI) / maxVertices;
+            int x = (int) (centroX + distancia * Math.cos(angulo));
+            int y = (int) (centroY + distancia * Math.sin(angulo));
+
+            int letra = random.nextInt(26);
+            String letraGenerada = abecedario[letra];
+            if (!nombresVertices.contains(letraGenerada)) {
+                nombresVertices.add(letraGenerada);
+                listaAdyacencia.add(new ArrayList<>());
+                vertices.add(new Point(x, y));
+                numVertices++;
+
+                tablaListaAdyacencia.setValueAt(letraGenerada, i, 0);
+
+                for (int j = 0; j < maxVertices; j++) {
+                    matrizAdyacencia[i][j] = 0;
+                    matrizAdyacencia[j][i] = 0;
+                }
+
+                tablaMatrizAdyacencia.setValueAt(letraGenerada, i + 1, 0);
+                tablaMatrizAdyacencia.setValueAt(letraGenerada, 0, i + 1);
+
+                i++;
+            }
+            }
+        repaint();
+    }
+
+
+
+
+    /*
+    METODOS DE ACCESO
+     */
+
+    public int gradoDeEntrada(int i){
+        if (i < 0 || i >= maxVertices) {
+            throw new IllegalArgumentException("Índice fuera de rango.");
+        }
+        int gradoEntrada = 0;
+        for (int u = 0; u < maxVertices; u++) {
+            if (matrizAdyacencia[u][i] != 0) {
+                gradoEntrada++;
+            }
+        }
+        return gradoEntrada;
+    }
+
+    public int gradoDeSalida(int i){
+        if (i < 0 || i >= maxVertices) {
+            throw new IllegalArgumentException("Índice fuera de rango.");
+        }
+        int gradoSalida= 0;
+        for (int u = 0; u < maxVertices; u++) {
+            if (matrizAdyacencia[i][u] != 0) {
+                gradoSalida++;
+            }
+        }
+        return gradoSalida;
+    }
+
+    public int cuantasAristasHay(){
+        int numAristas = 0;
+
+        for (int i = 0; i < maxVertices; i++) {
+            for (int j = 0; j < maxVertices; j++) {
+                if (matrizAdyacencia[i][j] != 0) {
+                    numAristas++;
+                }
+            }
+        }
+        return numAristas;
+    }
+
+    public boolean adyacente(int i,int j){
+        if(i<0||j<0||i>=maxVertices||j>=maxVertices){
+            throw new IllegalArgumentException("Índice fuera de rango.");
+        }
+        return matrizAdyacencia[i][j] != 0;
+    }
+
+
+    public boolean conectados(int i,int j){
+        if(i<0||j<0||i>=maxVertices||j>=maxVertices){
+            throw new IllegalArgumentException("Índice fuera de rango.");
+        }
+        if(i==j){
+            return false;
+        }
+        Queue<Integer> cola=new LinkedList<>();
+        boolean[] valores=new boolean[maxVertices];
+        cola.add(i);
+        valores[i]=true;
+
+        while(!cola.isEmpty()){
+            int actual=cola.poll();//elimina y regresa el elemento superior
+            for(int x=0;x<maxVertices;x++){
+                //solo si el valor fue encontrado pero no había sido visitado
+                if(matrizAdyacencia[actual][x]!=0 && valores[x]==false){
+                    if(x==j){ //si se encontró el valor de j
+                        return true;
+                    }
+                    valores[x]=true; //aseguramos que ya "visitamos" el valor
+                    cola.add(x);
+                }
+            }
+        }
+        return false;
+    }
+
+
+    public String topologicalSort(){
+            int[] gradoEntrada = new int[maxVertices];
+
+            for (int i = 0; i < maxVertices; i++) {
+                gradoEntrada[i] = gradoDeEntrada(i);
+            }
+
+            PriorityQueue<Integer> colaPrioridad = new PriorityQueue<>(Comparator.reverseOrder());
+
+            for (int i = 0; i < maxVertices; i++) {
+                if (gradoEntrada[i] == 0) {
+                    colaPrioridad.add(i);
+                }
+            }
+
+            String ordenTopologico = "";
+
+            int cont = 0;
+            while (!colaPrioridad.isEmpty()) {
+                int vertice = colaPrioridad.poll();
+
+                if (cont > 0) {
+                    ordenTopologico += "-";
+                }
+                ordenTopologico += nombresVertices.get(vertice);
+
+                for (int i = 0; i < maxVertices; i++) {
+                    if (adyacente(vertice, i)) {
+                        gradoEntrada[i]--;
+                        if (gradoEntrada[i] == 0) {
+                            colaPrioridad.add(i);
+                        }
+                    }
+                }
+
+                cont++;
+            }
+            return ordenTopologico;
+    }
+    
+    public String mostrarEstructura(){
+        String texto=" ";
+        for(int i = 0; i < maxVertices; i++){
+            texto+=" "+nombresVertices.get(i);
+        }
+        texto+="\n";
+
+        for(int i = 0; i < maxVertices; i++){
+            texto+=nombresVertices.get(i)+" ";
+            for(int j = 0; j < maxVertices; j++){
+                texto+=" "+matrizAdyacencia[i][j];
+            }
+            texto +="\n";
+        }
+        return texto;
     }
 }

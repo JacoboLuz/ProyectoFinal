@@ -89,6 +89,11 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         btnCrearVertice.addActionListener(e -> crearVertice());
         btnCrearArista.addActionListener(e -> crearArista());
         btnEliminarAristas.addActionListener(e -> eliminarAristas());
+        for (int i = 0; i < maxVertices; i++) {
+            for(int j=0;j<maxVertices;j++){
+                tablaMatrizAdyacencia.setValueAt(0, i, j);
+            }
+        }
     }
 
     private void crearVertice() {
@@ -118,8 +123,8 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             matrizAdyacencia[i][numVertices] = 0;
         }
 
-        tablaMatrizAdyacencia.setValueAt(nombreVertice, numVertices, 0);
-
+        tablaMatrizAdyacencia.setValueAt(nombreVertice, numVertices+1, 0);
+        tablaMatrizAdyacencia.setValueAt(nombreVertice, 0, numVertices+1);
         agregarVerticeGrafico();
         numVertices++;
         repaint();
@@ -140,32 +145,46 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         String origen = JOptionPane.showInputDialog(this, "Ingrese el vértice origen:");
         String destino = JOptionPane.showInputDialog(this, "Ingrese el vértice destino:");
 
+        // Verificar que los vértices sean válidos y que no se intente agregar una arista a sí mismo
         if (origen == null || destino == null || !nombresVertices.contains(origen) || !nombresVertices.contains(destino)) {
             JOptionPane.showMessageDialog(this, "Vértices inválidos.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (origen.equals(destino)) {
+            JOptionPane.showMessageDialog(this, "No se pueden crear aristas que conecten un vértice consigo mismo.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         int indexOrigen = nombresVertices.indexOf(origen);
         int indexDestino = nombresVertices.indexOf(destino);
 
+        // Verificar que no se forme un ciclo al agregar la arista
+        if (matrizAdyacencia[indexDestino][indexOrigen] == 1) {
+            JOptionPane.showMessageDialog(this, "La creación de un ciclo no está permitida.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Crear la arista en la matriz de adyacencia
         matrizAdyacencia[indexOrigen][indexDestino] = 1;
         aristas.add(new int[]{indexOrigen, indexDestino});
 
+        // Agregar la arista en la lista de adyacencia
         ArrayList<Integer> adyacentes = listaAdyacencia.get(indexOrigen);
         if (!adyacentes.contains(indexDestino)) {
             adyacentes.add(indexDestino);
         }
 
-        tablaMatrizAdyacencia.setValueAt("1", indexOrigen, indexDestino);
+        // Actualizar la tabla de matriz de adyacencia
+        tablaMatrizAdyacencia.setValueAt("1", indexOrigen + 1, indexDestino + 1);
 
+        // Actualizar la tabla de lista de adyacencia
         StringBuilder listaAdyacente = new StringBuilder();
         listaAdyacente.append(origen);
 
         ArrayList<Integer> lista = listaAdyacencia.get(indexOrigen);
         for (int i = 0; i < lista.size(); i++) {
-
             int verticeDestino = lista.get(i);
-
             listaAdyacente.append(" -> ");
             listaAdyacente.append(nombresVertices.get(verticeDestino));
         }
@@ -175,17 +194,6 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
         repaint();
     }
-
-
-
-
-
-
-
-
-
-
-
 
 
     private void eliminarAristas() {

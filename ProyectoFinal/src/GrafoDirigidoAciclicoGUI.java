@@ -457,7 +457,12 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
                 String valorStr = JOptionPane.showInputDialog("Introduce un valor:");
                 try {
                     int valor = Integer.parseInt(valorStr);
-                    grafoGUI = new GrafoDirigidoAciclicoGUI(valor);
+                    if (valor > 0) {
+                        grafoGUI = new GrafoDirigidoAciclicoGUI(valor);
+                    } else {
+                        JOptionPane.showMessageDialog(null, "El valor debe ser mayor que 0. Se usarán valores aleatorios.");
+                        grafoGUI = new GrafoDirigidoAciclicoGUI();
+                    }
                 } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog(null, "Valor no válido. Se usarán valores aleatorios.");
                     grafoGUI = new GrafoDirigidoAciclicoGUI();

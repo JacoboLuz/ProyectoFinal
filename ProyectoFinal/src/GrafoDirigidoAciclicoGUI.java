@@ -1,10 +1,15 @@
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.security.Guard;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.*;
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class GrafoDirigidoAciclicoGUI extends JFrame {
     private JPanel panelControl, panelDibujo, panelRepresentaciones;
@@ -19,6 +24,91 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     private ArrayList<Point> vertices;
     private ArrayList<int[]> aristas;
     private final int TAMANIO_VERTICE = 40;
+
+
+    public GrafoDirigidoAciclicoGUI(int maxVertices, int[][]matrizAdyacencia,ArrayList<String> nombresVertices,ArrayList<int[]>aristas) {
+        this.maxVertices = maxVertices;
+        this.matrizAdyacencia = matrizAdyacencia;
+        this.listaAdyacencia = new ArrayList<>();
+        this.nombresVertices = new ArrayList<>();
+        this.vertices = new ArrayList<>();
+        this.aristas = new ArrayList<>();
+
+        for (int i = 0; i < maxVertices; i++) {
+            listaAdyacencia.add(new ArrayList<>());
+        }
+
+        setTitle("Grafo Dirigido Acíclico");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setLayout(new BorderLayout());
+
+        panelControl = new JPanel(new FlowLayout());
+        btnCrearVertice = new JButton("Crear Vértice");
+        btnCrearArista = new JButton("Crear Arista");
+        btnCargarGrafo = new JButton("Cargar Grafo");
+        btnGuardarGrafo = new JButton("Guardar Grafo");
+        btnOrdenTopologico = new JButton("Orden Topológico");
+        btnEliminarAristas = new JButton("Eliminar Todas las Aristas");
+
+        panelControl.add(btnCrearVertice);
+        panelControl.add(btnCrearArista);
+        panelControl.add(btnCargarGrafo);
+        panelControl.add(btnGuardarGrafo);
+        panelControl.add(btnOrdenTopologico);
+        panelControl.add(btnEliminarAristas);
+
+        JPanel controlContainer = new JPanel(new BorderLayout());
+        controlContainer.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.BLACK), "Control de Grafo", TitledBorder.CENTER, TitledBorder.TOP));
+        controlContainer.add(panelControl);
+        add(controlContainer, BorderLayout.NORTH);
+
+        panelDibujo = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                dibujarGrafo(g);
+            }
+        };
+        panelDibujo.setBackground(Color.WHITE);
+
+        JPanel dibujoContainer = new JPanel(new BorderLayout());
+        dibujoContainer.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.BLACK), "Visualización del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
+        dibujoContainer.add(panelDibujo);
+        add(dibujoContainer, BorderLayout.CENTER);
+
+        panelRepresentaciones = new JPanel(new GridLayout(1, 3));
+        tablaMatrizAdyacencia = new JTable(maxVertices+1, maxVertices+1);
+        tablaListaAdyacencia = new JTable(maxVertices, 1);
+        areaOrdenTopologico = new JTextArea();
+        areaOrdenTopologico.setEditable(false);
+        panelRepresentaciones.add(new JScrollPane(tablaMatrizAdyacencia));
+        panelRepresentaciones.add(new JScrollPane(tablaListaAdyacencia));
+        panelRepresentaciones.add(new JScrollPane(areaOrdenTopologico));
+
+        JPanel representacionesContainer = new JPanel(new BorderLayout());
+        representacionesContainer.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.BLACK), "Representaciones del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
+        representacionesContainer.add(panelRepresentaciones);
+        add(representacionesContainer, BorderLayout.SOUTH);
+
+        btnCrearVertice.addActionListener(e -> crearVertice());
+        btnCrearArista.addActionListener(e -> crearArista());
+        btnEliminarAristas.addActionListener(e -> eliminarAristas());
+        btnOrdenTopologico.setEnabled(false);
+        btnOrdenTopologico.addActionListener(e->ordenTopologico());
+        btnGuardarGrafo.addActionListener(e->guardarGrafo());
+        btnCargarGrafo.addActionListener(e->cargarGrafo());
+        for (int i = 0; i <=maxVertices; i++) {
+            for(int j=0;j<=maxVertices;j++){
+                tablaMatrizAdyacencia.setValueAt(0, i, j);
+            }
+        }
+
+    }
+
 
     public GrafoDirigidoAciclicoGUI(int maxVertices) {
         this.maxVertices = maxVertices;
@@ -93,6 +183,8 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         btnEliminarAristas.addActionListener(e -> eliminarAristas());
         btnOrdenTopologico.setEnabled(false);
         btnOrdenTopologico.addActionListener(e->ordenTopologico());
+        btnGuardarGrafo.addActionListener(e->guardarGrafo());
+        btnCargarGrafo.addActionListener(e->cargarGrafo());
         for (int i = 0; i <=maxVertices; i++) {
             for(int j=0;j<=maxVertices;j++){
                 tablaMatrizAdyacencia.setValueAt(0, i, j);
@@ -161,8 +253,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         panelRepresentaciones.add(new JScrollPane(tablaMatrizAdyacencia));
         panelRepresentaciones.add(new JScrollPane(tablaListaAdyacencia));
         panelRepresentaciones.add(new JScrollPane(areaOrdenTopologico));
-        btnOrdenTopologico.setEnabled(false);
-        btnOrdenTopologico.addActionListener(e->ordenTopologico());
+
 
         JPanel representacionesContainer = new JPanel(new BorderLayout());
         representacionesContainer.setBorder(BorderFactory.createTitledBorder(
@@ -173,6 +264,11 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         btnCrearVertice.addActionListener(e -> crearVertice());
         btnCrearArista.addActionListener(e -> crearArista());
         btnEliminarAristas.addActionListener(e -> eliminarAristas());
+        btnOrdenTopologico.setEnabled(false);
+        btnOrdenTopologico.addActionListener(e->ordenTopologico());
+        btnGuardarGrafo.addActionListener(e->guardarGrafo());
+        btnCargarGrafo.addActionListener(e->cargarGrafo());
+
         for (int i = 0; i <= maxVertices; i++) {
             for(int j=0;j<=maxVertices;j++){
                 tablaMatrizAdyacencia.setValueAt(0, i, j);
@@ -251,7 +347,8 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         btnEliminarAristas.addActionListener(e -> eliminarAristas());
         btnOrdenTopologico.setEnabled(false);
         btnOrdenTopologico.addActionListener(e->ordenTopologico());
-
+        btnGuardarGrafo.addActionListener(e->guardarGrafo());
+        btnCargarGrafo.addActionListener(e->cargarGrafo());
 
         for (int i = 0; i <= maxVertices; i++) {
             for(int j=0;j<=maxVertices;j++){
@@ -264,9 +361,6 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             valoresLetrasAleatorios();
         }
     }
-
-
-
 
     //Método para generar vercices siempre y cuando no se haya excedido el tope de los mismos en el programa como tambien
     //es el encargado de añadir los vertices tanto a lista de adyacencia como a la matriz de adyacencia.
@@ -308,7 +402,6 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         areaOrdenTopologico.setText("Orden topológico: \n"+topologicalSort());
         System.out.println(mostrarEstructura());
     }
-
 
     //Es el encargado de pintar el vertice en la parte gráfica de la GUI.
     private void agregarVerticeGrafico() {
@@ -798,7 +891,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             }
             return ordenTopologico;
     }
-    
+
     public String mostrarEstructura(){
         String texto=" ";
         for(int i = 0; i < maxVertices; i++){
@@ -815,4 +908,191 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
         return texto;
     }
-}
+
+
+    //Metodo que permite guardar el grafo en el archivo
+    public void guardarGrafo() {
+        File archivo = new File("grafosGuardados.txt");
+        if (archivo.exists() && verificar(archivo)) {
+            JOptionPane.showMessageDialog(this, "El grafo ya había sido guardado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try (BufferedWriter escritor = new BufferedWriter(new FileWriter(archivo,true))) {
+            String fechaHora = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+            escritor.write("Fecha y hora de creación: " + fechaHora + "\n");
+            escritor.write("Max Vértices: " + this.maxVertices + "\n");
+
+            escritor.write("Matriz de Adyacencia:\n");
+            for (int i = 0; i < this.maxVertices; i++) {
+                for (int j = 0; j < this.maxVertices; j++) {
+                    escritor.write(this.matrizAdyacencia[i][j] + " ");
+                }
+                escritor.write("\n");
+            }
+            escritor.write("Lista de Vértices: \n");
+            for (String vertice : this.nombresVertices) {
+                escritor.write(vertice + "\n");
+            }
+
+            escritor.write("Aristas: \n");
+            for (int[] arista : this.aristas) {
+                escritor.write("[" + arista[0] + " -> " + arista[1] + "]\n");
+            }
+
+            JOptionPane.showMessageDialog(null, "Su grafo ha sido guardado con éxito.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private boolean verificar(File archivo) {
+        try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            while ((linea = lector.readLine()) != null) {
+                if (linea.startsWith("Matriz de Adyacencia:")) {
+                    for (int i = 0; i < this.maxVertices; i++) {
+                        linea = lector.readLine();
+                        String[] valores = linea.trim().split(" ");
+                        for (int j = 0; j < this.maxVertices; j++) {
+                            if (Integer.parseInt(valores[j]) != this.matrizAdyacencia[i][j]) {
+                                return false;
+                            }
+                        }
+                    }
+                    for (String vertice : this.nombresVertices) {
+                        linea = lector.readLine();
+                        if (!linea.equals(vertice)) {
+                            return false;
+                        }
+                    }
+                    for (int[] arista : this.aristas) {
+                        linea = lector.readLine();
+                        if (!linea.equals(arista)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public void cargarGrafo(){
+            List<String> grafos = listarGrafos();
+            if (grafos.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No hay grafos guardados para mostrar.", "EROR", JOptionPane.ERROR_MESSAGE);
+            } else {
+                String seleccion = (String) JOptionPane.showInputDialog(
+                        null,
+                        "Seleccione un grafo para cargar:",
+                        "Cargar Grafo",
+                        JOptionPane.PLAIN_MESSAGE,
+                        null,
+                        grafos.toArray(),
+                        grafos.get(0)
+                );
+
+                if (seleccion != null) {
+                    int indice = Integer.parseInt(seleccion.split(" ")[1]) - 1;
+                    leerArchivo(indice);
+                }
+        }
+
+    }
+    public void leerArchivo(int indice) {
+        File archivo = new File("grafosGuardados.txt");
+
+        if (!archivo.exists()) {
+            JOptionPane.showMessageDialog(null, "No se encontró el archivo de grafos guardados.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            int grafoActual = -1;
+            boolean leyendoMatriz = false;
+            boolean leyendoVertices = false;
+            boolean leyendoAristas = false;
+
+            int[][] nuevaMatrizAdyacencia = null;
+            ArrayList<String> nuevosNombresVertices = new ArrayList<>();
+            ArrayList<int[]> nuevasAristas = new ArrayList<>();
+            int nuevoMaxVertices = 0;
+
+            while ((linea = lector.readLine()) != null) {
+                if (linea.startsWith("Fecha y hora de creación: ")) {
+                    grafoActual++;
+                    if (grafoActual > indice) break;
+                }
+
+                if (grafoActual == indice) {
+                    if (linea.startsWith("Max Vértices: ")) {
+                        nuevoMaxVertices = Integer.parseInt(linea.replace("Max Vértices: ", "").trim());
+                        nuevaMatrizAdyacencia = new int[nuevoMaxVertices][nuevoMaxVertices];
+                    } else if (linea.startsWith("Matriz de Adyacencia:")) {
+                        leyendoMatriz = true;
+                        leyendoVertices = false;
+                        leyendoAristas = false;
+                    } else if (linea.startsWith("Lista de Vértices:")) {
+                        leyendoMatriz = false;
+                        leyendoVertices = true;
+                        leyendoAristas = false;
+                    } else if (linea.startsWith("Aristas:")) {
+                        leyendoMatriz = false;
+                        leyendoVertices = false;
+                        leyendoAristas = true;
+                    } else if (leyendoMatriz) {
+                        String[] valores = linea.trim().split(" ");
+                        for (int i = 0; i < valores.length; i++) {
+                            nuevaMatrizAdyacencia[nuevosNombresVertices.size()][i] = Integer.parseInt(valores[i]);
+                        }
+                    } else if (leyendoVertices) {
+                        nuevosNombresVertices.add(linea.trim());
+                    } else if (leyendoAristas) {
+                        String[] arista = linea.replace("[", "").replace("]", "").split(" -> ");
+                        nuevasAristas.add(new int[]{Integer.parseInt(arista[0]), Integer.parseInt(arista[1])});
+                    }
+                }
+            }
+
+            Auxiliar nuevaVentana = new Auxiliar(nuevoMaxVertices, nuevaMatrizAdyacencia, nuevosNombresVertices, nuevasAristas);
+            dispose();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Error al cargar el grafo. El archivo puede estar corrupto.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public List<String> listarGrafos() {
+        List<String> grafos = new ArrayList<>();
+        File archivo = new File("grafosGuardados.txt");
+
+        if (!archivo.exists()) {
+            JOptionPane.showMessageDialog(null, "No se encontraron grafos guardados.", "Información", JOptionPane.INFORMATION_MESSAGE);
+            return grafos;
+        }
+        try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            String fechaHora = null;
+            int grafoId = 1;
+
+            while ((linea = lector.readLine()) != null) {
+                if (linea.startsWith("Fecha y hora de creación: ")) {
+                    fechaHora = linea.replace("Fecha y hora de creación: ", "").trim();
+                }
+
+                if (linea.startsWith("Max Vértices: ")) {
+                    grafos.add("Grafo " + grafoId + " / Fecha: " + fechaHora);
+                    grafoId++;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return grafos;
+    }
+

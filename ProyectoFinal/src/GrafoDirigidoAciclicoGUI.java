@@ -25,7 +25,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     private ArrayList<String> nuevosNombresVertices;
     private ArrayList<Point> vertices;
     private ArrayList<int[]> aristas;
-    private final int TAMANIO_VERTICE = 40;
+    private final int TAMAÑO_VERTICE = 40;
 
 
     public GrafoDirigidoAciclicoGUI(int maxVertices, int[][]matrizAdyacencia,ArrayList<String> nombresVertices,ArrayList<int[]>aristas) {
@@ -558,7 +558,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             Point vertice = vertices.get(i);
 
             g2d.setColor(new Color(173, 216, 230));
-            g2d.fillOval(vertice.x - TAMANIO_VERTICE / 2, vertice.y - TAMANIO_VERTICE / 2, TAMANIO_VERTICE, TAMANIO_VERTICE);
+            g2d.fillOval(vertice.x - TAMAÑO_VERTICE / 2, vertice.y - TAMAÑO_VERTICE / 2, TAMAÑO_VERTICE, TAMAÑO_VERTICE);
 
             g2d.setColor(Color.BLACK);
             FontMetrics metrics = g2d.getFontMetrics();

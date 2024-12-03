@@ -1,3 +1,8 @@
+/*
+Proyecto Final Algoritmos
+Jacobo Aldrete Luz María
+Prieto Duarte Luis Fernando
+ */
 import java.util.ArrayList;
 import java.util.Random;
 public class GrafoDirigidoAciclico{

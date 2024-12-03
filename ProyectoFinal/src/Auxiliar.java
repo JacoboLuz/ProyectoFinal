@@ -1,3 +1,8 @@
+/*
+Proyecto Final Algoritmos
+Jacobo Aldrete Luz María
+Prieto Duarte Luis Fernando
+ */
 import javax.swing.*;
 import java.util.ArrayList;
 

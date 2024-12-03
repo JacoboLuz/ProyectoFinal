@@ -2,37 +2,38 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.io.*;
+import java.util.List;
+import java.util.Random;
 import javax.swing.border.TitledBorder;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class GrafoDirigidoAciclicoGUI extends JFrame {
 
     //
-    private JPanel panelControl, panelDibujo, panelRepresentaciones;
-    private JButton btnCrearVertice, btnCrearArista, btnCargarGrafo, btnGuardarGrafo, btnOrdenTopologico, btnEliminarAristas;
-    private JTextArea areaOrdenTopologico;
-    private JTable tablaMatrizAdyacencia, tablaListaAdyacencia;
-    private int maxVertices;
-    private int numVertices = 0;
-    private int[][] matrizAdyacencia;
-    private ArrayList<ArrayList<Integer>> listaAdyacencia;
-    private ArrayList<String> nombresVertices;
-    private ArrayList<String> nombresVerticesActualizados;
-    private int maxVerticesActualizados;
-    private ArrayList<Point> vertices;
-    private ArrayList<int[]> aristas;
+    private JPanel panelDeControl, panelDeDibujo, panelFormasDeMostrar;
+    private JButton botonParaCrearVertices, botonParaCrearAristas, botonParaCargarGrafos, botonParaGuardarGrafos, botonParaOrdenarTopologicamente, botonParaEliminarAristas;
+    private JTextArea areaDeTextoParaElTopologico;
+    private JTable tablaParaLaMatrizDeAdyacencia, tablaParaLaListaDeAdyacencia;
+    private int verticesMaximos;
+    private int ContadorVertices = 0;
+    private int[][] matrizDeAdyacencia;
+    private ArrayList<ArrayList<Integer>> listaDeAdyacencia;
+    private ArrayList<String> listaDeVertices;
+    private ArrayList<String> nuevaListaDeVertices;
+    private int nuevoMaximoDeVertices;
+    private ArrayList<Point> listaVertices;
+    private ArrayList<int[]> listaAristas;
+    private GrafoDirigidoAciclico grafoAciclico;
 
 
     /*
         Metodo main del programa.
      */
     public static void main(String[] args) {
-        //Preguntamos primero si deseamos generar los 4 numeros aleatorios o si deseamos solo ingresar los numeros de vertices
+        //Preguntamos primero si deseamos generar los 4 numeros aleatorios o si deseamos solo ingresar los numeros de la lista Vertices
         SwingUtilities.invokeLater(() -> {
             int opcion = JOptionPane.showOptionDialog(null, "¿Quieres usar números aleatorios o un valor personalizado?",
                     "Seleccionar opción", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
@@ -78,20 +79,20 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     //Constructor extra necesario para generar una nueva GUI a la hora de cargar un grafo
     /*
         Es necesario ingresar:
-            maxVertices, matrizAdyacencia, nombresVertices, aristas
+            verticesMaximos, matrizDeAdyacencia, listaDeVertices, aristas
         Regresa:
             -
      */
-    public GrafoDirigidoAciclicoGUI(int maxVertices, int[][]matrizAdyacencia,ArrayList<String> nombresVertices,ArrayList<int[]>aristas) {
-        this.maxVertices = maxVertices;
-        this.matrizAdyacencia = matrizAdyacencia;
-        this.listaAdyacencia = new ArrayList<>();
-        this.nombresVertices = nombresVertices;
-        this.vertices = new ArrayList<>();
-        this.aristas = aristas;
+    public GrafoDirigidoAciclicoGUI(int verticesMaximos, int[][]matrizDeAdyacencia,ArrayList<String> listaDeVertices,ArrayList<int[]>listaAristas) {
+        this.verticesMaximos = verticesMaximos;
+        this.matrizDeAdyacencia = matrizDeAdyacencia;
+        this.listaDeAdyacencia = new ArrayList<>();
+        this.listaDeVertices = listaDeVertices;
+        this.listaVertices = new ArrayList<>();
+        this.listaAristas = listaAristas;
 
-        for (int i = 0; i < maxVertices; i++) {
-            listaAdyacencia.add(new ArrayList<>());
+        for (int i = 0; i < verticesMaximos; i++) {
+            listaDeAdyacencia.add(new ArrayList<>());
         }
 
         setTitle("Interfaz para un Grafo Dirigido Acíclico");
@@ -99,73 +100,73 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLayout(new BorderLayout());
 
-        panelControl = new JPanel(new FlowLayout());
-        btnCrearVertice = new JButton("Crear Vértice");
-        btnCrearArista = new JButton("Crear Arista");
-        btnCargarGrafo = new JButton("Cargar Grafo");
-        btnGuardarGrafo = new JButton("Guardar Grafo");
-        btnOrdenTopologico = new JButton("Orden Topológico");
-        btnEliminarAristas = new JButton("Eliminar Todas las Aristas");
+        panelDeControl = new JPanel(new FlowLayout());
+        botonParaCrearVertices = new JButton("Crear Vértice");
+        botonParaCrearAristas = new JButton("Crear Arista");
+        botonParaCargarGrafos = new JButton("Cargar Grafo");
+        botonParaGuardarGrafos = new JButton("Guardar Grafo");
+        botonParaOrdenarTopologicamente = new JButton("Orden Topológico");
+        botonParaEliminarAristas = new JButton("Eliminar Todas las Aristas");
 
-        panelControl.add(btnCrearVertice);
-        panelControl.add(btnCrearArista);
-        panelControl.add(btnCargarGrafo);
-        panelControl.add(btnGuardarGrafo);
-        panelControl.add(btnOrdenTopologico);
-        panelControl.add(btnEliminarAristas);
+        panelDeControl.add(botonParaCrearVertices);
+        panelDeControl.add(botonParaCrearAristas);
+        panelDeControl.add(botonParaCargarGrafos);
+        panelDeControl.add(botonParaGuardarGrafos);
+        panelDeControl.add(botonParaOrdenarTopologicamente);
+        panelDeControl.add(botonParaEliminarAristas);
 
         JPanel controlContainer = new JPanel(new BorderLayout());
         controlContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Control de Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        controlContainer.add(panelControl);
+        controlContainer.add(panelDeControl);
         add(controlContainer, BorderLayout.NORTH);
 
-        panelDibujo = new JPanel() {
+        panelDeDibujo = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 dibujarGrafo(g);
             }
         };
-        panelDibujo.setBackground(Color.WHITE);
+        panelDeDibujo.setBackground(Color.WHITE);
 
         JPanel dibujoContainer = new JPanel(new BorderLayout());
         dibujoContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Visualización del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        dibujoContainer.add(panelDibujo);
+        dibujoContainer.add(panelDeDibujo);
         add(dibujoContainer, BorderLayout.CENTER);
 
-        panelRepresentaciones = new JPanel(new GridLayout(1, 3));
-        tablaMatrizAdyacencia = new JTable(maxVertices+1, maxVertices+1);
-        tablaListaAdyacencia = new JTable(maxVertices, 1);
-        areaOrdenTopologico = new JTextArea();
-        areaOrdenTopologico.setEditable(false);
-        panelRepresentaciones.add(new JScrollPane(tablaMatrizAdyacencia));
-        panelRepresentaciones.add(new JScrollPane(tablaListaAdyacencia));
-        panelRepresentaciones.add(new JScrollPane(areaOrdenTopologico));
+        panelFormasDeMostrar = new JPanel(new GridLayout(1, 3));
+        tablaParaLaMatrizDeAdyacencia = new JTable(verticesMaximos+1, verticesMaximos+1);
+        tablaParaLaListaDeAdyacencia = new JTable(verticesMaximos, 1);
+        areaDeTextoParaElTopologico = new JTextArea();
+        areaDeTextoParaElTopologico.setEditable(false);
+        panelFormasDeMostrar.add(new JScrollPane(tablaParaLaMatrizDeAdyacencia));
+        panelFormasDeMostrar.add(new JScrollPane(tablaParaLaListaDeAdyacencia));
+        panelFormasDeMostrar.add(new JScrollPane(areaDeTextoParaElTopologico));
 
         JPanel representacionesContainer = new JPanel(new BorderLayout());
         representacionesContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Representaciones del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        representacionesContainer.add(panelRepresentaciones);
+        representacionesContainer.add(panelFormasDeMostrar);
         add(representacionesContainer, BorderLayout.SOUTH);
 
-        btnCrearVertice.addActionListener(e -> crearVertice());
-        btnCrearArista.addActionListener(e -> crearArista());
-        btnEliminarAristas.addActionListener(e -> eliminarAristas());
-        btnOrdenTopologico.setEnabled(false);
-        btnOrdenTopologico.addActionListener(e->ordenTopologico());
-        btnGuardarGrafo.addActionListener(e->guardarGrafo());
-        btnCargarGrafo.addActionListener(e->cargarGrafo());
+        botonParaCrearVertices.addActionListener(e -> crearVertice());
+        botonParaCrearAristas.addActionListener(e -> crearArista());
+        botonParaEliminarAristas.addActionListener(e -> eliminarAristas());
+        botonParaOrdenarTopologicamente.setEnabled(false);
+        botonParaOrdenarTopologicamente.addActionListener(e->ordenTopologico());
+        botonParaGuardarGrafos.addActionListener(e->guardarGrafo());
+        botonParaCargarGrafos.addActionListener(e->cargarGrafo());
 
-        for (int i = 0; i <=maxVertices; i++) {
-            for(int j=0;j<=maxVertices;j++){
-                tablaMatrizAdyacencia.setValueAt(0, i, j);
+        for (int i = 0; i <=verticesMaximos; i++) {
+            for(int j=0;j<=verticesMaximos;j++){
+                tablaParaLaMatrizDeAdyacencia.setValueAt(0, i, j);
             }
         }
-        crearVerticesCargados(maxVertices,nombresVertices);
-        System.out.println(maxVertices);
-        System.out.println(nombresVertices);
+        crearVerticesCargados(verticesMaximos,listaDeVertices);
+        System.out.println(verticesMaximos);
+        System.out.println(listaDeVertices);
     }
 
 
@@ -173,85 +174,85 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
     /*
         Constructor que permite definir la cantidad de vértices del grafo y generar datos de forma aleatoria, donde:
-        n=cantidad máxima de vertices
+        n=cantidad máxima de la lista Vertices
         opc=opción que permite saber si se eligió generar letras aleatorias o números
      */
     public GrafoDirigidoAciclicoGUI(int n,int opc) {
         //empezamos declarando los atributos
-        this.maxVertices = n;
-        this.matrizAdyacencia = new int[n+1][n+1];
-        this.listaAdyacencia = new ArrayList<>();
-        this.nombresVertices = new ArrayList<>();
-        this.vertices = new ArrayList<>();
-        this.aristas = new ArrayList<>();
+        this.verticesMaximos = n;
+        this.matrizDeAdyacencia = new int[n+1][n+1];
+        this.listaDeAdyacencia = new ArrayList<>();
+        this.listaDeVertices = new ArrayList<>();
+        this.listaVertices = new ArrayList<>();
+        this.listaAristas = new ArrayList<>();
 
         setTitle("Interfaz para un Grafo Dirigido Acíclico"); //declaramos el título para la interfaz
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLayout(new BorderLayout());
 
-        panelControl = new JPanel(new FlowLayout()); //creamos un nuevo panel en el que agregar los botones
-        btnCrearVertice = new JButton("Crear Vértice");
-        btnCrearArista = new JButton("Crear Arista");
-        btnCargarGrafo = new JButton("Cargar Grafo");
-        btnGuardarGrafo = new JButton("Guardar Grafo");
-        btnOrdenTopologico = new JButton("Orden Topológico");
-        btnEliminarAristas = new JButton("Eliminar Todas las Aristas");
-        panelControl.add(btnCrearVertice);
-        panelControl.add(btnCrearArista);
-        panelControl.add(btnCargarGrafo);
-        panelControl.add(btnGuardarGrafo);
-        panelControl.add(btnOrdenTopologico);
-        panelControl.add(btnEliminarAristas);
+        panelDeControl = new JPanel(new FlowLayout()); //creamos un nuevo panel en el que agregar los botones
+        botonParaCrearVertices = new JButton("Crear Vértice");
+        botonParaCrearAristas = new JButton("Crear Arista");
+        botonParaCargarGrafos = new JButton("Cargar Grafo");
+        botonParaGuardarGrafos = new JButton("Guardar Grafo");
+        botonParaOrdenarTopologicamente = new JButton("Orden Topológico");
+        botonParaEliminarAristas = new JButton("Eliminar Todas las Aristas");
+        panelDeControl.add(botonParaCrearVertices);
+        panelDeControl.add(botonParaCrearAristas);
+        panelDeControl.add(botonParaCargarGrafos);
+        panelDeControl.add(botonParaGuardarGrafos);
+        panelDeControl.add(botonParaOrdenarTopologicamente);
+        panelDeControl.add(botonParaEliminarAristas);
 
         JPanel controlContainer = new JPanel(new BorderLayout());
         controlContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Control del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        controlContainer.add(panelControl); //generamos un panel para poder visualizar los botones
+        controlContainer.add(panelDeControl); //generamos un panel para poder visualizar los botones
         add(controlContainer, BorderLayout.NORTH);
 
-        panelDibujo = new JPanel() {
+        panelDeDibujo = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 dibujarGrafo(g); //dibujamos los grafos
             }
         };
-        panelDibujo.setBackground(Color.WHITE);
+        panelDeDibujo.setBackground(Color.WHITE);
 
         JPanel dibujoContainer = new JPanel(new BorderLayout()); //generamos un panel para poder mostrar el dibujo
         dibujoContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        dibujoContainer.add(panelDibujo);
+        dibujoContainer.add(panelDeDibujo);
         add(dibujoContainer, BorderLayout.CENTER);
 
-        panelRepresentaciones = new JPanel(new GridLayout(1, 3));
-        tablaMatrizAdyacencia = new JTable(n+1, n+1);
-        tablaListaAdyacencia = new JTable(n, 1);
-        areaOrdenTopologico = new JTextArea();
-        areaOrdenTopologico.setEditable(false);
-        panelRepresentaciones.add(new JScrollPane(tablaMatrizAdyacencia));
-        panelRepresentaciones.add(new JScrollPane(tablaListaAdyacencia));
-        panelRepresentaciones.add(new JScrollPane(areaOrdenTopologico));
+        panelFormasDeMostrar = new JPanel(new GridLayout(1, 3));
+        tablaParaLaMatrizDeAdyacencia = new JTable(n+1, n+1);
+        tablaParaLaListaDeAdyacencia = new JTable(n, 1);
+        areaDeTextoParaElTopologico = new JTextArea();
+        areaDeTextoParaElTopologico.setEditable(false);
+        panelFormasDeMostrar.add(new JScrollPane(tablaParaLaMatrizDeAdyacencia));
+        panelFormasDeMostrar.add(new JScrollPane(tablaParaLaListaDeAdyacencia));
+        panelFormasDeMostrar.add(new JScrollPane(areaDeTextoParaElTopologico));
 
         JPanel representacionesContainer = new JPanel(new BorderLayout()); //agregamos las representaciones de cada grafo como su tabla y la lista
         representacionesContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Grafo representados", TitledBorder.CENTER, TitledBorder.TOP));
-        representacionesContainer.add(panelRepresentaciones);
+        representacionesContainer.add(panelFormasDeMostrar);
         add(representacionesContainer, BorderLayout.SOUTH);
 
         //"unimos" los metodos con los botones
-        btnCrearVertice.addActionListener(e -> crearVertice());
-        btnCrearArista.addActionListener(e -> crearArista());
-        btnEliminarAristas.addActionListener(e -> eliminarAristas());
-        btnOrdenTopologico.setEnabled(false); //declaramos el boton como desactivado para evitar problemas
-        btnOrdenTopologico.addActionListener(e->ordenTopologico());
-        btnGuardarGrafo.addActionListener(e->guardarGrafo());
-        btnCargarGrafo.addActionListener(e->cargarGrafo());
+        botonParaCrearVertices.addActionListener(e -> crearVertice());
+        botonParaCrearAristas.addActionListener(e -> crearArista());
+        botonParaEliminarAristas.addActionListener(e -> eliminarAristas());
+        botonParaOrdenarTopologicamente.setEnabled(false); //declaramos el boton como desactivado para evitar problemas
+        botonParaOrdenarTopologicamente.addActionListener(e->ordenTopologico());
+        botonParaGuardarGrafos.addActionListener(e->guardarGrafo());
+        botonParaCargarGrafos.addActionListener(e->cargarGrafo());
 
         for (int i = 0; i <= n; i++) { //mostramos la matriz
             for(int j=0;j<=n;j++){
-                tablaMatrizAdyacencia.setValueAt(0, i, j);
+                tablaParaLaMatrizDeAdyacencia.setValueAt(0, i, j);
             }
         }
         if(opc==0){ //mandamos a llamar a su método correspondiente
@@ -267,15 +268,15 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
      */
     public GrafoDirigidoAciclicoGUI(int n) {
         //Parecido al constructor anteiror
-        this.maxVertices = n;
-        this.matrizAdyacencia = new int[n+1][n+1];
-        this.listaAdyacencia = new ArrayList<>();
-        this.nombresVertices = new ArrayList<>();
-        this.vertices = new ArrayList<>();
-        this.aristas = new ArrayList<>();
+        this.verticesMaximos = n;
+        this.matrizDeAdyacencia = new int[n+1][n+1];
+        this.listaDeAdyacencia = new ArrayList<>();
+        this.listaDeVertices = new ArrayList<>();
+        this.listaVertices = new ArrayList<>();
+        this.listaAristas = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
-            listaAdyacencia.add(new ArrayList<>());
+            listaDeAdyacencia.add(new ArrayList<>());
         }
 
         setTitle("Interfaz para un Grafo Dirigido Acíclico");
@@ -283,67 +284,67 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLayout(new BorderLayout());
 
-        panelControl = new JPanel(new FlowLayout());
-        btnCrearVertice = new JButton("Crear Vértice");
-        btnCrearArista = new JButton("Crear Arista");
-        btnCargarGrafo = new JButton("Cargar Grafo");
-        btnGuardarGrafo = new JButton("Guardar Grafo");
-        btnOrdenTopologico = new JButton("Orden Topológico");
-        btnEliminarAristas = new JButton("Eliminar Todas las Aristas");
+        panelDeControl = new JPanel(new FlowLayout());
+        botonParaCrearVertices = new JButton("Crear Vértice");
+        botonParaCrearAristas = new JButton("Crear Arista");
+        botonParaCargarGrafos = new JButton("Cargar Grafo");
+        botonParaGuardarGrafos = new JButton("Guardar Grafo");
+        botonParaOrdenarTopologicamente = new JButton("Orden Topológico");
+        botonParaEliminarAristas = new JButton("Eliminar Todas las Aristas");
 
-        panelControl.add(btnCrearVertice);
-        panelControl.add(btnCrearArista);
-        panelControl.add(btnCargarGrafo);
-        panelControl.add(btnGuardarGrafo);
-        panelControl.add(btnOrdenTopologico);
-        panelControl.add(btnEliminarAristas);
+        panelDeControl.add(botonParaCrearVertices);
+        panelDeControl.add(botonParaCrearAristas);
+        panelDeControl.add(botonParaCargarGrafos);
+        panelDeControl.add(botonParaGuardarGrafos);
+        panelDeControl.add(botonParaOrdenarTopologicamente);
+        panelDeControl.add(botonParaEliminarAristas);
 
         JPanel controlContainer = new JPanel(new BorderLayout());
         controlContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Control de Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        controlContainer.add(panelControl);
+        controlContainer.add(panelDeControl);
         add(controlContainer, BorderLayout.NORTH);
 
-        panelDibujo = new JPanel() {
+        panelDeDibujo = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 dibujarGrafo(g);
             }
         };
-        panelDibujo.setBackground(Color.WHITE);
+        panelDeDibujo.setBackground(Color.WHITE);
 
         JPanel dibujoContainer = new JPanel(new BorderLayout());
         dibujoContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Visualización del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        dibujoContainer.add(panelDibujo);
+        dibujoContainer.add(panelDeDibujo);
         add(dibujoContainer, BorderLayout.CENTER);
 
-        panelRepresentaciones = new JPanel(new GridLayout(1, 3));
-        tablaMatrizAdyacencia = new JTable(n+1, n+1);
-        tablaListaAdyacencia = new JTable(n, 1);
-        areaOrdenTopologico = new JTextArea();
-        areaOrdenTopologico.setEditable(false);
-        panelRepresentaciones.add(new JScrollPane(tablaMatrizAdyacencia));
-        panelRepresentaciones.add(new JScrollPane(tablaListaAdyacencia));
-        panelRepresentaciones.add(new JScrollPane(areaOrdenTopologico));
+        panelFormasDeMostrar = new JPanel(new GridLayout(1, 3));
+        tablaParaLaMatrizDeAdyacencia = new JTable(n+1, n+1);
+        tablaParaLaListaDeAdyacencia = new JTable(n, 1);
+        areaDeTextoParaElTopologico = new JTextArea();
+        areaDeTextoParaElTopologico.setEditable(false);
+        panelFormasDeMostrar.add(new JScrollPane(tablaParaLaMatrizDeAdyacencia));
+        panelFormasDeMostrar.add(new JScrollPane(tablaParaLaListaDeAdyacencia));
+        panelFormasDeMostrar.add(new JScrollPane(areaDeTextoParaElTopologico));
 
         JPanel representacionesContainer = new JPanel(new BorderLayout());
         representacionesContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Representaciones del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        representacionesContainer.add(panelRepresentaciones);
+        representacionesContainer.add(panelFormasDeMostrar);
         add(representacionesContainer, BorderLayout.SOUTH);
 
-        btnCrearVertice.addActionListener(e -> crearVertice());
-        btnCrearArista.addActionListener(e -> crearArista());
-        btnEliminarAristas.addActionListener(e -> eliminarAristas());
-        btnOrdenTopologico.setEnabled(false);
-        btnOrdenTopologico.addActionListener(e->ordenTopologico());
-        btnGuardarGrafo.addActionListener(e->guardarGrafo());
-        btnCargarGrafo.addActionListener(e->cargarGrafo());
+        botonParaCrearVertices.addActionListener(e -> crearVertice());
+        botonParaCrearAristas.addActionListener(e -> crearArista());
+        botonParaEliminarAristas.addActionListener(e -> eliminarAristas());
+        botonParaOrdenarTopologicamente.setEnabled(false);
+        botonParaOrdenarTopologicamente.addActionListener(e->ordenTopologico());
+        botonParaGuardarGrafos.addActionListener(e->guardarGrafo());
+        botonParaCargarGrafos.addActionListener(e->cargarGrafo());
         for (int i = 0; i <=n; i++) {
             for(int j=0;j<=n;j++){
-                tablaMatrizAdyacencia.setValueAt(0, i, j);
+                tablaParaLaMatrizDeAdyacencia.setValueAt(0, i, j);
             }
         }
     }
@@ -354,15 +355,15 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
      */
     public GrafoDirigidoAciclicoGUI() {
         //parecido al metodo anterior
-        this.maxVertices = 4;
-        this.matrizAdyacencia = new int[maxVertices+1][maxVertices+1];
-        this.listaAdyacencia = new ArrayList<>();
-        this.nombresVertices = new ArrayList<>();
-        this.vertices = new ArrayList<>();
-        this.aristas = new ArrayList<>();
+        this.verticesMaximos = 4;
+        this.matrizDeAdyacencia = new int[verticesMaximos+1][verticesMaximos+1];
+        this.listaDeAdyacencia = new ArrayList<>();
+        this.listaDeVertices = new ArrayList<>();
+        this.listaVertices = new ArrayList<>();
+        this.listaAristas = new ArrayList<>();
 
-        for (int i = 0; i < maxVertices; i++) {
-            listaAdyacencia.add(new ArrayList<>());
+        for (int i = 0; i < verticesMaximos; i++) {
+            listaDeAdyacencia.add(new ArrayList<>());
         }
 
         setTitle("Interfaz para un Grafo Dirigido Acíclico");
@@ -370,69 +371,69 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLayout(new BorderLayout());
 
-        panelControl = new JPanel(new FlowLayout());
-        btnCrearVertice = new JButton("Crear Vértice");
-        btnCrearArista = new JButton("Crear Arista");
-        btnCargarGrafo = new JButton("Cargar Grafo");
-        btnGuardarGrafo = new JButton("Guardar Grafo");
-        btnOrdenTopologico = new JButton("Orden Topológico");
-        btnEliminarAristas = new JButton("Eliminar Todas las Aristas");
+        panelDeControl = new JPanel(new FlowLayout());
+        botonParaCrearVertices = new JButton("Crear Vértice");
+        botonParaCrearAristas = new JButton("Crear Arista");
+        botonParaCargarGrafos = new JButton("Cargar Grafo");
+        botonParaGuardarGrafos = new JButton("Guardar Grafo");
+        botonParaOrdenarTopologicamente = new JButton("Orden Topológico");
+        botonParaEliminarAristas = new JButton("Eliminar Todas las Aristas");
 
-        panelControl.add(btnCrearVertice);
-        panelControl.add(btnCrearArista);
-        panelControl.add(btnCargarGrafo);
-        panelControl.add(btnGuardarGrafo);
-        panelControl.add(btnOrdenTopologico);
-        panelControl.add(btnEliminarAristas);
+        panelDeControl.add(botonParaCrearVertices);
+        panelDeControl.add(botonParaCrearAristas);
+        panelDeControl.add(botonParaCargarGrafos);
+        panelDeControl.add(botonParaGuardarGrafos);
+        panelDeControl.add(botonParaOrdenarTopologicamente);
+        panelDeControl.add(botonParaEliminarAristas);
 
         JPanel controlContainer = new JPanel(new BorderLayout());
         controlContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Control de Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        controlContainer.add(panelControl);
+        controlContainer.add(panelDeControl);
         add(controlContainer, BorderLayout.NORTH);
 
-        panelDibujo = new JPanel() {
+        panelDeDibujo = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 dibujarGrafo(g);
             }
         };
-        panelDibujo.setBackground(Color.WHITE);
+        panelDeDibujo.setBackground(Color.WHITE);
 
         JPanel dibujoContainer = new JPanel(new BorderLayout());
         dibujoContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Visualización del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        dibujoContainer.add(panelDibujo);
+        dibujoContainer.add(panelDeDibujo);
         add(dibujoContainer, BorderLayout.CENTER);
 
-        panelRepresentaciones = new JPanel(new GridLayout(1, 3));
-        tablaMatrizAdyacencia = new JTable(maxVertices+1, maxVertices+1);
-        tablaListaAdyacencia = new JTable(maxVertices, 1);
-        areaOrdenTopologico = new JTextArea();
-        areaOrdenTopologico.setEditable(false);
-        panelRepresentaciones.add(new JScrollPane(tablaMatrizAdyacencia));
-        panelRepresentaciones.add(new JScrollPane(tablaListaAdyacencia));
-        panelRepresentaciones.add(new JScrollPane(areaOrdenTopologico));
+        panelFormasDeMostrar = new JPanel(new GridLayout(1, 3));
+        tablaParaLaMatrizDeAdyacencia = new JTable(verticesMaximos+1, verticesMaximos+1);
+        tablaParaLaListaDeAdyacencia = new JTable(verticesMaximos, 1);
+        areaDeTextoParaElTopologico = new JTextArea();
+        areaDeTextoParaElTopologico.setEditable(false);
+        panelFormasDeMostrar.add(new JScrollPane(tablaParaLaMatrizDeAdyacencia));
+        panelFormasDeMostrar.add(new JScrollPane(tablaParaLaListaDeAdyacencia));
+        panelFormasDeMostrar.add(new JScrollPane(areaDeTextoParaElTopologico));
 
 
         JPanel representacionesContainer = new JPanel(new BorderLayout());
         representacionesContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK), "Representaciones del Grafo", TitledBorder.CENTER, TitledBorder.TOP));
-        representacionesContainer.add(panelRepresentaciones);
+        representacionesContainer.add(panelFormasDeMostrar);
         add(representacionesContainer, BorderLayout.SOUTH);
 
-        btnCrearVertice.addActionListener(e -> crearVertice());
-        btnCrearArista.addActionListener(e -> crearArista());
-        btnEliminarAristas.addActionListener(e -> eliminarAristas());
-        btnOrdenTopologico.setEnabled(false);
-        btnOrdenTopologico.addActionListener(e->ordenTopologico());
-        btnGuardarGrafo.addActionListener(e->guardarGrafo());
-        btnCargarGrafo.addActionListener(e->cargarGrafo());
+        botonParaCrearVertices.addActionListener(e -> crearVertice());
+        botonParaCrearAristas.addActionListener(e -> crearArista());
+        botonParaEliminarAristas.addActionListener(e -> eliminarAristas());
+        botonParaOrdenarTopologicamente.setEnabled(false);
+        botonParaOrdenarTopologicamente.addActionListener(e->ordenTopologico());
+        botonParaGuardarGrafos.addActionListener(e->guardarGrafo());
+        botonParaCargarGrafos.addActionListener(e->cargarGrafo());
 
-        for (int i = 0; i <= maxVertices; i++) {
-            for(int j=0;j<=maxVertices;j++){
-                tablaMatrizAdyacencia.setValueAt(0, i, j);
+        for (int i = 0; i <= verticesMaximos; i++) {
+            for(int j=0;j<=verticesMaximos;j++){
+                tablaParaLaMatrizDeAdyacencia.setValueAt(0, i, j);
             }
         }
         crearVerticesAleatorios();
@@ -442,7 +443,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         Metodo para mostrar en la GUI el orden topológico
      */
     private void ordenTopologico(){
-        areaOrdenTopologico.setText("Orden topológico: \n"+topologicalSort());
+        areaDeTextoParaElTopologico.setText("Orden topológico: \n"+topologicalSort());
         System.out.println(mostrarEstructura());
     }
 
@@ -452,7 +453,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         es el encargado de añadir los vertices tanto a lista de adyacencia como a la matriz de adyacencia.
      */
     private void crearVertice() {
-        if (numVertices >= maxVertices) {
+        if (ContadorVertices >= verticesMaximos) {
             JOptionPane.showMessageDialog(this, "No se pueden agregar más vértices. Límite alcanzado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -463,39 +464,39 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             JOptionPane.showMessageDialog(this, "Ingrese un nombre válido.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (nombresVertices.contains(nombreVertice)) {
+        if (listaDeVertices.contains(nombreVertice)) {
             JOptionPane.showMessageDialog(this, "Nombre de vértice ya ingresado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        nombresVertices.add(nombreVertice);
-        listaAdyacencia.add(new ArrayList<>());
-        tablaListaAdyacencia.setValueAt(nombreVertice, numVertices, 0);
+        listaDeVertices.add(nombreVertice);
+        listaDeAdyacencia.add(new ArrayList<>());
+        tablaParaLaListaDeAdyacencia.setValueAt(nombreVertice, ContadorVertices, 0);
 
-        for (int i = 0; i < maxVertices; i++) { //generamos la matriz de adyacencia
-            matrizAdyacencia[numVertices][i] = 0;
-            matrizAdyacencia[i][numVertices] = 0;
+        for (int i = 0; i < verticesMaximos; i++) { //generamos la matriz de adyacencia
+            matrizDeAdyacencia[ContadorVertices][i] = 0;
+            matrizDeAdyacencia[i][ContadorVertices] = 0;
         }
 
-        tablaMatrizAdyacencia.setValueAt(nombreVertice, numVertices+1, 0); //guardamos en nuestra tabla el nombre del vertice
-        tablaMatrizAdyacencia.setValueAt(nombreVertice, 0, numVertices+1);
+        tablaParaLaMatrizDeAdyacencia.setValueAt(nombreVertice, ContadorVertices+1, 0); //guardamos en nuestra tabla el nombre del vertice
+        tablaParaLaMatrizDeAdyacencia.setValueAt(nombreVertice, 0, ContadorVertices+1);
         agregarVerticeGrafico();//agregamos el vertice al metodo grafico
-        numVertices++;
+        ContadorVertices++;
         repaint();
     }
 
 
     //Encargado de pintar el vertice en la parte gráfica de la GUI
     private void agregarVerticeGrafico() {
-        int centroX = panelDibujo.getWidth() / 2;
-        int centroY = panelDibujo.getHeight() / 2;
+        int centroX = panelDeDibujo.getWidth() / 2;
+        int centroY = panelDeDibujo.getHeight() / 2;
 
-        //calculamos la dirección para mostrar los vertices de forma gráfica
-        double angulo = (numVertices * 2 * Math.PI) / maxVertices;
+        //calculamos la dirección para mostrar los  de forma gráfica
+        double angulo = (ContadorVertices * 2 * Math.PI) / verticesMaximos;
         int distancia = 200;
         int x = (int) (centroX + distancia * Math.cos(angulo));
         int y = (int) (centroY + distancia * Math.sin(angulo));
-        vertices.add(new Point(x, y));
+        listaVertices.add(new Point(x, y));
     }
 
     /*
@@ -507,7 +508,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         String origen = JOptionPane.showInputDialog(this, "Ingrese el vértice origen:");
         String destino = JOptionPane.showInputDialog(this, "Ingrese el vértice destino:");
 
-        if (origen == null || destino == null || !nombresVertices.contains(origen) || !nombresVertices.contains(destino)) {
+        if (origen == null || destino == null || !listaDeVertices.contains(origen) || !listaDeVertices.contains(destino)) {
             JOptionPane.showMessageDialog(this, "Vértices inválidos.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -517,10 +518,10 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             return;
         }
 
-        int iOrigen = nombresVertices.indexOf(origen);
-        int iDestino = nombresVertices.indexOf(destino);
+        int iOrigen = listaDeVertices.indexOf(origen);
+        int iDestino = listaDeVertices.indexOf(destino);
 
-        if (matrizAdyacencia[iOrigen][iDestino] == 1) {
+        if (matrizDeAdyacencia[iOrigen][iDestino] == 1) {
             JOptionPane.showMessageDialog(this, "La arista ya existe.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -530,32 +531,32 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             return;
         }
 
-        matrizAdyacencia[iOrigen][iDestino] = 1; //guardamos un uno para la matriz
-        aristas.add(new int[]{iOrigen, iDestino}); //agregamos una arista nueva
+        matrizDeAdyacencia[iOrigen][iDestino] = 1; //guardamos un uno para la matriz
+        listaAristas.add(new int[]{iOrigen, iDestino}); //agregamos una arista nueva
 
-        ArrayList<Integer> adyacentes = listaAdyacencia.get(iOrigen); //tomamos el valor de origen
+        ArrayList<Integer> adyacentes = listaDeAdyacencia.get(iOrigen); //tomamos el valor de origen
         if (!adyacentes.contains(iDestino)) { //en caso de que no se tenga ya el valor hacia el destino
             adyacentes.add(iDestino); //se almacena
-            btnOrdenTopologico.setEnabled(true); //se activa el orden topologico ya que se tiene una arista
+            botonParaOrdenarTopologicamente.setEnabled(true); //se activa el orden topologico ya que se tiene una arista
         }
 
-        tablaMatrizAdyacencia.setValueAt("1", iOrigen+1, iDestino +1);
+        tablaParaLaMatrizDeAdyacencia.setValueAt("1", iOrigen+1, iDestino +1);
 
         StringBuilder listaAdyacente = new StringBuilder();
         listaAdyacente.append(origen);
 
-        ArrayList<Integer> lista = listaAdyacencia.get(iOrigen);
+        ArrayList<Integer> lista = listaDeAdyacencia.get(iOrigen);
         for (int i = 0; i < lista.size(); i++) { //generamos la lista de adyacencia
             int verticeDestino = lista.get(i);
             listaAdyacente.append(" -> ");
-            listaAdyacente.append(nombresVertices.get(verticeDestino));
+            listaAdyacente.append(listaDeVertices.get(verticeDestino));
         }
         listaAdyacente.append("/0");
 
-        tablaListaAdyacencia.setValueAt(listaAdyacente.toString(), iOrigen, 0);
+        tablaParaLaListaDeAdyacencia.setValueAt(listaAdyacente.toString(), iOrigen, 0);
 
-        int x1 = vertices.get(iOrigen).x; int y1 = vertices.get(iOrigen).y;
-        int x2 = vertices.get(iDestino).x; int y2 = vertices.get(iDestino).y;
+        int x1 = listaVertices.get(iOrigen).x; int y1 = listaVertices.get(iOrigen).y;
+        int x2 = listaVertices.get(iDestino).x; int y2 = listaVertices.get(iDestino).y;
 
         Graphics2D g2d = (Graphics2D) getGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -566,7 +567,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     }
     //Manda a llamar a un método responsable de verificar si ocurre un ciclo en el programa
     private boolean verificarCiclo(int origen, int destino) {
-        boolean[] visitados = new boolean[nombresVertices.size()];
+        boolean[] visitados = new boolean[listaDeVertices.size()];
         return hayCiclo(destino, origen, visitados);
     }
     //Método encargado de revisar si ocurre algun ciclo en el programa.
@@ -575,7 +576,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             return true;
         }
         visitados[vertice] = true;
-        for (int vecino : listaAdyacencia.get(vertice)) {
+        for (int vecino : listaDeAdyacencia.get(vertice)) {
             if (vecino == destino || hayCiclo(vecino, destino, visitados)) {
                 return true;
             }
@@ -584,29 +585,29 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     }
     //Método encargado de borrar todas las aristas junto a las flechas dibujadas en el programa
     private void eliminarAristas() {
-        aristas.clear(); //limpiamos las aristas
+        listaAristas.clear(); //limpiamos las aristas
 
-        for (int i = 0; i < maxVertices; i++) { //reiniciamos las vertices
-            for (int j = 0; j < maxVertices; j++) {
-                matrizAdyacencia[i][j] = 0;
+        for (int i = 0; i < verticesMaximos; i++) { //reiniciamos las vertices
+            for (int j = 0; j < verticesMaximos; j++) {
+                matrizDeAdyacencia[i][j] = 0;
             }
         }
 
-        listaAdyacencia.clear();
-        for (int i = 0; i < nombresVertices.size(); i++) { //reiniciamos la lista de adyacencia
-            listaAdyacencia.add(new ArrayList<>());
+        listaDeAdyacencia.clear();
+        for (int i = 0; i < listaDeVertices.size(); i++) { //reiniciamos la lista de adyacencia
+            listaDeAdyacencia.add(new ArrayList<>());
         }
 
-        for (int i = 0; i < nombresVertices.size(); i++) { //actualizamos las tablas
-            tablaMatrizAdyacencia.setValueAt(nombresVertices.get(i), i + 1, 0);
-            tablaMatrizAdyacencia.setValueAt(nombresVertices.get(i), 0, i + 1);
-            tablaListaAdyacencia.setValueAt(nombresVertices.get(i), i, 0);
-            for (int j = 0; j < nombresVertices.size(); j++) {
-                tablaMatrizAdyacencia.setValueAt(0, i + 1, j + 1);
+        for (int i = 0; i < listaDeVertices.size(); i++) { //actualizamos las tablas
+            tablaParaLaMatrizDeAdyacencia.setValueAt(listaDeVertices.get(i), i + 1, 0);
+            tablaParaLaMatrizDeAdyacencia.setValueAt(listaDeVertices.get(i), 0, i + 1);
+            tablaParaLaListaDeAdyacencia.setValueAt(listaDeVertices.get(i), i, 0);
+            for (int j = 0; j < listaDeVertices.size(); j++) {
+                tablaParaLaMatrizDeAdyacencia.setValueAt(0, i + 1, j + 1);
             }
         }
-        btnOrdenTopologico.setEnabled(false); //desactivamos el boton de orden topologico
-        areaOrdenTopologico.setText("");
+        botonParaOrdenarTopologicamente.setEnabled(false); //desactivamos el boton de orden topologico
+        areaDeTextoParaElTopologico.setText("");
         repaint();
     }
 
@@ -615,23 +616,23 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        for (int[] arista : aristas) {
-            Point origen = vertices.get(arista[0]);
-            Point destino = vertices.get(arista[1]);
+        for (int[] arista : listaAristas) {
+            Point origen = listaVertices.get(arista[0]);
+            Point destino = listaVertices.get(arista[1]);
             System.out.println(arista[0]);
             System.out.println(arista[1]);
             dibujarFlecha(g2d, origen, destino);
         }
 
-        for (int i = 0; i < vertices.size(); i++) {
-            Point vertice = vertices.get(i);
+        for (int i = 0; i < listaVertices.size(); i++) {
+            Point vertice = listaVertices.get(i);
 
             g2d.setColor(new Color(173, 216, 230));
             g2d.fillOval(vertice.x - 40 / 2, vertice.y - 40 / 2, 40, 40);
 
             g2d.setColor(Color.BLACK);
             FontMetrics metrics = g2d.getFontMetrics();
-            String texto = nombresVertices.get(i);
+            String texto = listaDeVertices.get(i);
 
             int textoAncho = metrics.stringWidth(texto);
             int textoAltura = metrics.getHeight();
@@ -649,13 +650,13 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         double dx = destino.x - origen.x; double dy = destino.y - origen.y;
         double angle = Math.atan2(dy, dx);
 
-        int base = 10; int altura = 20; int desplazamiento = 15;
+        int base = 10; int altitud = 20; int desplazamiento = 15;
 
         int nuevoX = (int) (destino.x - desplazamiento * Math.cos(angle));
         int nuevoY = (int) (destino.y - desplazamiento * Math.sin(angle));
 
-        int x1 = (int) (nuevoX - altura * Math.cos(angle));
-        int y1 = (int) (nuevoY - altura * Math.sin(angle));
+        int x1 = (int) (nuevoX - altitud * Math.cos(angle));
+        int y1 = (int) (nuevoY - altitud * Math.sin(angle));
         int x2 = (int) (x1 - base * Math.sin(angle));
         int y2 = (int) (y1 + base * Math.cos(angle));
         int x3 = (int) (x1 + base * Math.sin(angle));
@@ -669,8 +670,8 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     private void crearVerticesAleatorios() {
         Random random = new Random();
 
-        int width = panelDibujo.getWidth();
-        int height = panelDibujo.getHeight();
+        int width = panelDeDibujo.getWidth();
+        int height = panelDeDibujo.getHeight();
 
         if (width <= 0 || height <= 0) {
             width = 500;
@@ -682,25 +683,25 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
         for (int i = 0; i < 4; i++) {
             String nombreVertice = String.valueOf(random.nextInt(100));
-            nombresVertices.add(nombreVertice);
-            listaAdyacencia.add(new ArrayList<>());
+            listaDeVertices.add(nombreVertice);
+            listaDeAdyacencia.add(new ArrayList<>());
 
             int x = (i % 2) * distanciaX + distanciaX / 2;
             int y = (i / 2) * distanciaY + distanciaY / 2;
 
-            vertices.add(new Point(x, y));
+            listaVertices.add(new Point(x, y));
 
-            numVertices++;
+            ContadorVertices++;
 
-            tablaListaAdyacencia.setValueAt(nombreVertice, i, 0);
+            tablaParaLaListaDeAdyacencia.setValueAt(nombreVertice, i, 0);
 
-            for (int j = 0; j < maxVertices; j++) {
-                matrizAdyacencia[i][j] = 0;
-                matrizAdyacencia[j][i] = 0;
+            for (int j = 0; j < verticesMaximos; j++) {
+                matrizDeAdyacencia[i][j] = 0;
+                matrizDeAdyacencia[j][i] = 0;
             }
 
-            tablaMatrizAdyacencia.setValueAt(nombreVertice, i + 1, 0);
-            tablaMatrizAdyacencia.setValueAt(nombreVertice, 0, i + 1);
+            tablaParaLaMatrizDeAdyacencia.setValueAt(nombreVertice, i + 1, 0);
+            tablaParaLaMatrizDeAdyacencia.setValueAt(nombreVertice, 0, i + 1);
         }
 
         repaint();
@@ -714,38 +715,38 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     public void valoresNumericosAleatorios() {
         Random random = new Random(); //generamos un numero random
 
-        int ancho = panelDibujo.getWidth();
-        int altura = panelDibujo.getHeight();
+        int anchura = panelDeDibujo.getWidth();
+        int altitud = panelDeDibujo.getHeight();
 
-        if (ancho <= 0 || altura <= 0) {
-            ancho = 500; altura = 500;
+        if (anchura <= 0 || altitud <= 0) {
+            anchura = 500; altitud = 500;
         }
         //calculamos la mitad
-        int mitadEnX = ancho / 2;
-        int mitadEnY = altura / 2;
+        int mitadEnX = anchura / 2;
+        int mitadEnY = altitud / 2;
 
         int distancia = 200;
 
-        for (int i = 0; i < maxVertices; i++) { //aumentamos i mientras sea menor a la cantidad de vertices
-            double angulo = (i * 2 * Math.PI) / maxVertices; //calculamos el ángulo
+        for (int i = 0; i < verticesMaximos; i++) { //aumentamos i mientras sea menor a la cantidad de vertices
+            double angulo = (i * 2 * Math.PI) / verticesMaximos; //calculamos el ángulo
             int x = (int) (mitadEnX + distancia * Math.cos(angulo));
             int y = (int) (mitadEnY + distancia * Math.sin(angulo));
 
             String nombreVertice = String.valueOf(random.nextInt(100)); //generamos un número aleatorio
-            nombresVertices.add(nombreVertice); //lo guardamos en la lista de nombres
-            listaAdyacencia.add(new ArrayList<>());
+            listaDeVertices.add(nombreVertice); //lo guardamos en la lista de nombres
+            listaDeAdyacencia.add(new ArrayList<>());
 
-            vertices.add(new Point(x, y));
+            listaVertices.add(new Point(x, y));
 
-            numVertices++;
+            ContadorVertices++;
 
-            tablaListaAdyacencia.setValueAt(nombreVertice, i, 0);
-            for (int j = 0; j < maxVertices; j++) { //generamos la matriz de adyacencia
-                matrizAdyacencia[i][j] = 0;
-                matrizAdyacencia[j][i] = 0;
+            tablaParaLaListaDeAdyacencia.setValueAt(nombreVertice, i, 0);
+            for (int j = 0; j < verticesMaximos; j++) { //generamos la matriz de adyacencia
+                matrizDeAdyacencia[i][j] = 0;
+                matrizDeAdyacencia[j][i] = 0;
             }
-            tablaMatrizAdyacencia.setValueAt(nombreVertice, i + 1, 0);
-            tablaMatrizAdyacencia.setValueAt(nombreVertice, 0, i + 1);
+            tablaParaLaMatrizDeAdyacencia.setValueAt(nombreVertice, i + 1, 0);
+            tablaParaLaMatrizDeAdyacencia.setValueAt(nombreVertice, 0, i + 1);
         }
         repaint();
     }
@@ -753,43 +754,43 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     public void valoresLetrasAleatorios() {
         String[] abecedario = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
                 "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U",
-                "V", "W", "X", "Y", "Z"}; //guardamos el abecedario en una matriz
+                "V", "W", "X", "Y", "Z"}; //Guardamos las letras del abecedario en una matriz
         Random random = new Random();
 
         //aplicando una logica parecida a la anterior
-        int ancho = panelDibujo.getWidth();
-        int altura = panelDibujo.getHeight();
+        int anchura = panelDeDibujo.getWidth();
+        int altitud = panelDeDibujo.getHeight();
 
-        if (ancho <= 0 || altura <= 0) {
-            ancho = 500; altura = 500;
+        if (anchura <= 0 || altitud <= 0) {
+            anchura = 500; altitud = 500;
         }
-        int mitadEnX = ancho / 2;
-        int mitadEnY = altura / 2;
+        int mitadEnX = anchura / 2;
+        int mitadEnY = altitud / 2;
 
         int distancia = 200;
 
-        for (int i = 0; i < maxVertices;) {
-            double angulo = (i * 2 * Math.PI) / maxVertices;
+        for (int i = 0; i < verticesMaximos;) {
+            double angulo = (i * 2 * Math.PI) / verticesMaximos;
             int x = (int) (mitadEnX + distancia * Math.cos(angulo));
             int y = (int) (mitadEnY + distancia * Math.sin(angulo));
 
             int letra = random.nextInt(26);
             String letraGenerada = abecedario[letra]; //tomamos una letra de la matriz
-            if (!nombresVertices.contains(letraGenerada)) { //verificamos si la letra ya estaba generada
-                nombresVertices.add(letraGenerada); //guardamos y mostramos solo si no se tiene ya
-                listaAdyacencia.add(new ArrayList<>());
-                vertices.add(new Point(x, y));
-                numVertices++;
+            if (!listaDeVertices.contains(letraGenerada)) { //verificamos si la letra ya estaba generada
+                listaDeVertices.add(letraGenerada); //guardamos y mostramos solo si no se tiene ya
+                listaDeAdyacencia.add(new ArrayList<>());
+                listaVertices.add(new Point(x, y));
+                ContadorVertices++;
 
-                tablaListaAdyacencia.setValueAt(letraGenerada, i, 0);
+                tablaParaLaListaDeAdyacencia.setValueAt(letraGenerada, i, 0);
 
-                for (int j = 0; j < maxVertices; j++) {
-                    matrizAdyacencia[i][j] = 0;
-                    matrizAdyacencia[j][i] = 0;
+                for (int j = 0; j < verticesMaximos; j++) {
+                    matrizDeAdyacencia[i][j] = 0;
+                    matrizDeAdyacencia[j][i] = 0;
                 }
 
-                tablaMatrizAdyacencia.setValueAt(letraGenerada, i + 1, 0);
-                tablaMatrizAdyacencia.setValueAt(letraGenerada, 0, i + 1);
+                tablaParaLaMatrizDeAdyacencia.setValueAt(letraGenerada, i + 1, 0);
+                tablaParaLaMatrizDeAdyacencia.setValueAt(letraGenerada, 0, i + 1);
 
                 i++; //aumentamos i
             }
@@ -803,12 +804,12 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
      */
 
     public int gradoDeEntrada(int i){
-        if (i < 0 || i >= maxVertices) {
+        if (i < 0 || i >= verticesMaximos) {
             throw new IllegalArgumentException("Índice fuera de rango."); //lanzamos mensaje de excepción si el indice está fuera de rango
         }
         int gradoEntrada = 0;
-        for (int u = 0; u < maxVertices; u++) {
-            if (matrizAdyacencia[u][i] == 1) { //si se tiene un uno en la matriz
+        for (int u = 0; u < verticesMaximos; u++) {
+            if (matrizDeAdyacencia[u][i] == 1) { //si se tiene un uno en la matriz
                 gradoEntrada++; //se aumenta el grado
             }
         }
@@ -816,12 +817,12 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     }
 
     public int gradoDeSalida(int i){
-        if (i < 0 || i >= maxVertices) {
+        if (i < 0 || i >= verticesMaximos) {
             throw new IllegalArgumentException("Índice fuera de rango.");//lanzamos mensaje de excepción si el indice está fuera de rango
         }
         int gradoSalida= 0;
-        for (int u = 0; u < maxVertices; u++) {
-            if (matrizAdyacencia[i][u] == 1) { //si se tiene un uno en la matriz
+        for (int u = 0; u < verticesMaximos; u++) {
+            if (matrizDeAdyacencia[i][u] == 1) { //si se tiene un uno en la matriz
                 gradoSalida++; //se aumenta el grado
             }
         }
@@ -830,9 +831,9 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
     public int cuantasAristasHay(){
         int numAristas = 0;
-        for (int i = 0; i < maxVertices; i++) {
-            for (int j = 0; j < maxVertices; j++) {
-                if (matrizAdyacencia[i][j] == 1) { //si se tiene un uno en la matriz
+        for (int i = 0; i < verticesMaximos; i++) {
+            for (int j = 0; j < verticesMaximos; j++) {
+                if (matrizDeAdyacencia[i][j] == 1) { //si se tiene un uno en la matriz
                     numAristas++; //se aumenta la cantidad de aristas
                 }
             }
@@ -841,30 +842,30 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     }
 
     public boolean adyacente(int i,int j){
-        if(i<0||j<0||i>=maxVertices||j>=maxVertices){
+        if(i<0||j<0||i>=verticesMaximos||j>=verticesMaximos){
             throw new IllegalArgumentException("Índice fuera de rango.");
         }
-        return matrizAdyacencia[i][j] == 1;
+        return matrizDeAdyacencia[i][j] == 1;
     }
 
 
     public boolean conectados(int i,int j){
-        if(i<0||j<0||i>=maxVertices||j>=maxVertices){
+        if(i<0||j<0||i>=verticesMaximos||j>=verticesMaximos){
             throw new IllegalArgumentException("Índice fuera de rango.");
         }
         if(i==j){
             return false;
         }
         Queue<Integer> cola=new LinkedList<>();
-        boolean[] valores=new boolean[maxVertices];
+        boolean[] valores=new boolean[verticesMaximos];
         cola.add(i);
         valores[i]=true;
 
         while(!cola.isEmpty()){
             int actual=cola.poll();//elimina y regresa el elemento superior
-            for(int x=0;x<maxVertices;x++){
+            for(int x=0;x<verticesMaximos;x++){
                 //solo si el valor fue encontrado pero no había sido visitado
-                if(matrizAdyacencia[actual][x]!=0 && valores[x]==false){
+                if(matrizDeAdyacencia[actual][x]!=0 && valores[x]==false){
                     if(x==j){ //si se encontró el valor de j
                         return true;
                     }
@@ -878,15 +879,15 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
 
     public String topologicalSort(){
-        int[] gradoEntrada = new int[maxVertices];
+        int[] gradoEntrada = new int[verticesMaximos];
 
-        for (int i = 0; i < maxVertices; i++) {
+        for (int i = 0; i < verticesMaximos; i++) {
             gradoEntrada[i] = gradoDeEntrada(i);
         }
 
         PriorityQueue<Integer> colaPrioridad = new PriorityQueue<>(Comparator.reverseOrder());
 
-        for (int i = 0; i < maxVertices; i++) {
+        for (int i = 0; i < verticesMaximos; i++) {
             if (gradoEntrada[i] == 0) {
                 colaPrioridad.add(i);
             }
@@ -901,9 +902,9 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             if (cont > 0) {
                 ordenTopologico += "-";
             }
-            ordenTopologico += nombresVertices.get(vertice);
+            ordenTopologico += listaDeVertices.get(vertice);
 
-            for (int i = 0; i < maxVertices; i++) {
+            for (int i = 0; i < verticesMaximos; i++) {
                 if (adyacente(vertice, i)) {
                     gradoEntrada[i]--;
                     if (gradoEntrada[i] == 0) {
@@ -919,15 +920,15 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
     public String mostrarEstructura(){
         String texto=" ";
-        for(int i = 0; i < maxVertices; i++){
-            texto+=" "+nombresVertices.get(i);
+        for(int i = 0; i < verticesMaximos; i++){
+            texto+=" "+listaDeVertices.get(i);
         }
         texto+="\n";
 
-        for(int i = 0; i < maxVertices; i++){
-            texto+=nombresVertices.get(i)+" ";
-            for(int j = 0; j < maxVertices; j++){
-                texto+=" "+matrizAdyacencia[i][j];
+        for(int i = 0; i < verticesMaximos; i++){
+            texto+=listaDeVertices.get(i)+" ";
+            for(int j = 0; j < verticesMaximos; j++){
+                texto+=" "+matrizDeAdyacencia[i][j];
             }
             texto +="\n";
         }
@@ -940,28 +941,29 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         File archivo = new File("grafosGuardados.txt");
         if (archivo.exists() && verificar(archivo)) {
             JOptionPane.showMessageDialog(this, "El grafo ya había sido guardado.", "Error", JOptionPane.ERROR_MESSAGE);
+            metodoPrueba();
             return;
         }
 
         try (BufferedWriter escritor = new BufferedWriter(new FileWriter(archivo,true))) {
-            String fechaHora = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-            escritor.write("Fecha y hora de creación: " + fechaHora + "\n");
-            escritor.write("Max Vértices: " + this.maxVertices + "\n");
+            String horaYFecha = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+            escritor.write("Fecha y hora de creación: " + horaYFecha + "\n");
+            escritor.write("Maximo de vertices: " + this.verticesMaximos + "\n");
 
             escritor.write("Matriz de Adyacencia:\n");
-            for (int i = 0; i < this.maxVertices; i++) {
-                for (int j = 0; j < this.maxVertices; j++) {
-                    escritor.write(this.matrizAdyacencia[i][j] + " ");
+            for (int i = 0; i < this.verticesMaximos; i++) {
+                for (int j = 0; j < this.verticesMaximos; j++) {
+                    escritor.write(this.matrizDeAdyacencia[i][j] + " ");
                 }
                 escritor.write("\n");
             }
             escritor.write("Lista de Vértices: \n");
-            for (String vertice : this.nombresVertices) {
+            for (String vertice : this.listaDeVertices) {
                 escritor.write(vertice + "\n");
             }
 
             escritor.write("Aristas: \n");
-            for (int[] arista : this.aristas) {
+            for (int[] arista : this.listaAristas) {
                 escritor.write("[" + arista[0] + " -> " + arista[1] + "]\n");
             }
 
@@ -975,22 +977,22 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             String linea;
             while ((linea = lector.readLine()) != null) {
                 if (linea.startsWith("Matriz de Adyacencia:")) {
-                    for (int i = 0; i < this.maxVertices; i++) {
+                    for (int i = 0; i < this.verticesMaximos; i++) {
                         linea = lector.readLine();
                         String[] valores = linea.trim().split(" ");
-                        for (int j = 0; j < this.maxVertices; j++) {
-                            if (Integer.parseInt(valores[j]) != this.matrizAdyacencia[i][j]) {
+                        for (int j = 0; j < this.verticesMaximos; j++) {
+                            if (Integer.parseInt(valores[j]) != this.matrizDeAdyacencia[i][j]) {
                                 return false;
                             }
                         }
                     }
-                    for (String vertice : this.nombresVertices) {
+                    for (String vertice : this.listaDeVertices) {
                         linea = lector.readLine();
                         if (!linea.equals(vertice)) {
                             return false;
                         }
                     }
-                    for (int[] arista : this.aristas) {
+                    for (int[] arista : this.listaAristas) {
                         linea = lector.readLine();
                         if (!linea.equals(arista)) {
                             return false;
@@ -1008,7 +1010,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     public void cargarGrafo(){
         List<String> grafos = listarGrafos();
         if (grafos.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "No hay grafos guardados para mostrar.", "EROR", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "No hay grafos guardados para mostrar.", "ERROR", JOptionPane.ERROR_MESSAGE);
         } else {
             String seleccion = (String) JOptionPane.showInputDialog(
                     null,
@@ -1028,6 +1030,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
     }
     public void leerArchivo(int indice) {
+        grafoAciclico= new GrafoDirigidoAciclico(verticesMaximos, 1);
         File archivo = new File("grafosGuardados.txt");
 
         if (!archivo.exists()) {
@@ -1054,8 +1057,8 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
                 }
 
                 if (grafoActual == indice) {
-                    if (linea.startsWith("Max Vértices: ")) {
-                        nuevoMaxVertices = Integer.parseInt(linea.replace("Max Vértices: ", "").trim());
+                    if (linea.startsWith("Maximo de vertices: ")) {
+                        nuevoMaxVertices = Integer.parseInt(linea.replace("Maximo de vertices: ", "").trim());
                         nuevaMatrizAdyacencia = new int[nuevoMaxVertices][nuevoMaxVertices];
                     } else if (linea.startsWith("Matriz de Adyacencia:")) {
                         leyendoMatriz = true;
@@ -1082,17 +1085,17 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
                     }
                 }
             }
-            this.maxVerticesActualizados=maxVerticesActualizados;
-            this.nombresVerticesActualizados =nuevosNombresVertices;
+            this.nuevoMaximoDeVertices=nuevoMaximoDeVertices;
+            this.nuevaListaDeVertices =nuevosNombresVertices;
             Auxiliar nuevaVentana = new Auxiliar(nuevoMaxVertices, nuevaMatrizAdyacencia, nuevosNombresVertices, nuevasAristas);
-            System.out.println("Nuevo Max Vértices: " + nuevoMaxVertices);
+            System.out.println("Nuevo Maximo de vertices: " + nuevoMaxVertices);
             System.out.println("Nombres de Vértices: " + nuevosNombresVertices);
 
             dispose();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Error al cargar el grafo. El archivo puede estar corrupto.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Error al cargar el grafo.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1101,21 +1104,21 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         File archivo = new File("grafosGuardados.txt");
 
         if (!archivo.exists()) {
-            JOptionPane.showMessageDialog(null, "No se encontraron grafos guardados.", "Información", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(null, "No se encontraron grafos en el archivo", "Error", JOptionPane.INFORMATION_MESSAGE);
             return grafos;
         }
         try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
             String linea;
-            String fechaHora = null;
+            String horaYFecha = null;
             int grafoId = 1;
 
             while ((linea = lector.readLine()) != null) {
                 if (linea.startsWith("Fecha y hora de creación: ")) {
-                    fechaHora = linea.replace("Fecha y hora de creación: ", "").trim();
+                    horaYFecha = linea.replace("Fecha y hora de creación: ", "").trim();
                 }
 
-                if (linea.startsWith("Max Vértices: ")) {
-                    grafos.add("Grafo " + grafoId + " / Fecha: " + fechaHora);
+                if (linea.startsWith("Maximo de vertices: ")) {
+                    grafos.add("Grafo " + grafoId + " / Fecha: " + horaYFecha);
                     grafoId++;
                 }
             }
@@ -1127,12 +1130,12 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     private void crearVerticesCargados(int nuevoMaxVertices,ArrayList<String> nuevosNombresVertices) {
 
         if (nuevoMaxVertices == 0 || nuevosNombresVertices.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "No hay datos cargados para los vértices.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "No hay datos para los vértices.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        int width = panelDibujo.getWidth();
-        int height = panelDibujo.getHeight();
+        int width = panelDeDibujo.getWidth();
+        int height = panelDeDibujo.getHeight();
 
         if (width <= 0 || height <= 0) {
             width = 500;
@@ -1143,33 +1146,49 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
         int distancia = 200;
 
-        for (int i = 0; i < maxVertices; i++) {
-            double angulo = (i * 2 * Math.PI) / maxVertices;
+        for (int i = 0; i < verticesMaximos; i++) {
+            double angulo = (i * 2 * Math.PI) / verticesMaximos;
             int x = (int) (centroX + distancia * Math.cos(angulo));
             int y = (int) (centroY + distancia * Math.sin(angulo));
 
             String nombreVertice = nuevosNombresVertices.get(i);
             System.out.println(nombreVertice);
-            nombresVertices.add(nombreVertice);
-            listaAdyacencia.add(new ArrayList<>());
+            listaDeVertices.add(nombreVertice);
+            listaDeAdyacencia.add(new ArrayList<>());
 
 
-            vertices.add(new Point(x, y));
+            listaVertices.add(new Point(x, y));
 
-            numVertices++;
+            ContadorVertices++;
 
-            tablaListaAdyacencia.setValueAt(nombreVertice, i, 0);
+            tablaParaLaListaDeAdyacencia.setValueAt(nombreVertice, i, 0);
 
             for (int j = 0; j < nuevoMaxVertices; j++) {
-                matrizAdyacencia[i][j] = 0;
-                matrizAdyacencia[j][i] = 0;
+                matrizDeAdyacencia[i][j] = 0;
+                matrizDeAdyacencia[j][i] = 0;
             }
 
-            tablaMatrizAdyacencia.setValueAt(nombreVertice, i + 1, 0);
-            tablaMatrizAdyacencia.setValueAt(nombreVertice, 0, i + 1);
+            tablaParaLaMatrizDeAdyacencia.setValueAt(nombreVertice, i + 1, 0);
+            tablaParaLaMatrizDeAdyacencia.setValueAt(nombreVertice, 0, i + 1);
         }
 
         repaint();
+    }
+
+    public void metodoPrueba() {
+        GrafoDirigidoAciclico grafo = new GrafoDirigidoAciclico(4, 1);
+        grafo.insertarArista(0, 1);
+        grafo.insertarArista(1, 2);
+        grafo.insertarArista(2, 4);
+        System.out.println(grafo.gradoDeEntrada(2));
+        System.out.println(grafo.gradoDeSalida(1));
+        System.out.println(grafo.cuantasAristasHay());
+        System.out.println(grafo.adyacente(1, 2));
+        System.out.println(grafo.conectados(0, 3));
+        System.out.println(grafo.tieneCiclos());
+        System.out.println(grafo.topologicalSort());
+        grafo.eliminarAristas();
+        System.out.println(grafo.mostrarEsructura());
     }
 
 }

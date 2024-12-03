@@ -755,7 +755,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
         repaint();
     }
-
+    //Método para guardar los valores en letras que se usaran en los aleatorios.
     public void valoresLetrasAleatorios() {
         String[] abecedario = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
                 "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U",
@@ -807,7 +807,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
     /*
     METODOS DE ACCESO
      */
-
+    //Método que se encarga generar el grado de entrada del grafo.
     public int gradoDeEntrada(int i){
         if (i < 0 || i >= verticesMaximos) {
             throw new IllegalArgumentException("Índice fuera de rango."); //lanzamos mensaje de excepción si el indice está fuera de rango
@@ -820,7 +820,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
         return gradoEntrada;
     }
-
+    //Método encargado de mostrar el grado de salida de los grafos
     public int gradoDeSalida(int i){
         if (i < 0 || i >= verticesMaximos) {
             throw new IllegalArgumentException("Índice fuera de rango.");//lanzamos mensaje de excepción si el indice está fuera de rango
@@ -833,7 +833,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
         return gradoSalida;
     }
-
+    //Método que regresa el total de aristas que tiene el grafo
     public int cuantasAristasHay(){
         int numAristas = 0;
         for (int i = 0; i < verticesMaximos; i++) {
@@ -845,7 +845,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
         return numAristas;
     }
-
+    //Método para saber si existe adyacencia entre los grafos
     public boolean adyacente(int i,int j){
         if(i<0||j<0||i>=verticesMaximos||j>=verticesMaximos){
             throw new IllegalArgumentException("Índice fuera de rango.");
@@ -853,7 +853,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         return matrizDeAdyacencia[i][j] == 1;
     }
 
-
+    //Método para saber si los gráfos se encuentran conectados
     public boolean conectados(int i,int j){
         if(i<0||j<0||i>=verticesMaximos||j>=verticesMaximos){
             throw new IllegalArgumentException("Índice fuera de rango.");
@@ -882,7 +882,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         return false;
     }
 
-
+    //Ordenamiento topologico de los grafos del programa
     public String topologicalSort(){
         int[] gradoEntrada = new int[verticesMaximos];
 
@@ -922,7 +922,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
         return ordenTopologico;
     }
-
+    //Método debug para mostrar la estructura de los grafos
     public String mostrarEstructura(){
         String texto=" ";
         for(int i = 0; i < verticesMaximos; i++){
@@ -977,6 +977,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             e.printStackTrace();
         }
     }
+    //Método que se encarga de verificar los valores de la matriz de adyacencia
     private boolean verificar(File archivo) {
         try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
             String linea;
@@ -1034,6 +1035,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
 
     }
+    //Método que se encarga de leer el archivo de texto en busqueda de grafos
     public void leerArchivo(int indice) {
         grafoAciclico= new GrafoDirigidoAciclico(verticesMaximos, 1);
         File archivo = new File("grafosGuardados.txt");
@@ -1103,7 +1105,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
             JOptionPane.showMessageDialog(null, "Error al cargar el grafo.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-
+    // Mëtodo encargado de listar todos los gráfos guardados
     public List<String> listarGrafos() {
         List<String> grafos = new ArrayList<>();
         File archivo = new File("grafosGuardados.txt");
@@ -1132,6 +1134,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
         }
         return grafos;
     }
+    //Método encargado de volver a generar los vertices cargados con anterioridad
     private void crearVerticesCargados(int nuevoMaxVertices,ArrayList<String> nuevosNombresVertices) {
 
         if (nuevoMaxVertices == 0 || nuevosNombresVertices.isEmpty()) {
@@ -1179,7 +1182,7 @@ public class GrafoDirigidoAciclicoGUI extends JFrame {
 
         repaint();
     }
-
+    //Método encargado de probar el funcionamiento de los grafos
     public void metodoPrueba() {
         GrafoDirigidoAciclico grafo = new GrafoDirigidoAciclico(4, 1);
         grafo.insertarArista(0, 1);
